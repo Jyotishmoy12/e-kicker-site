@@ -1,8 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Heart } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { auth } from '../../firebase'; // Assuming firebase is initialized here
+import { onAuthStateChanged } from 'firebase/auth';
 
 const ProductComponent = () => {
+  const [user, setUser] = useState(null); // To track if the user is logged in
+  const navigate = useNavigate(); // For redirecting to SignUpPage
+
+  useEffect(() => {
+    // Check if the user is logged in
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user); // Set user if logged in
+    });
+
+    // Cleanup listener on component unmount
+    return () => unsubscribe();
+  }, []);
+
   // Sample product data
   const products = [
     {
@@ -37,7 +52,7 @@ const ProductComponent = () => {
     }
   ];
 
-const renderStars = (rating) => {
+  const renderStars = (rating) => {
     return Array.from({ length: 5 }, (_, index) => (
       <span 
         key={index} 
@@ -46,6 +61,17 @@ const renderStars = (rating) => {
         ★
       </span>
     ));
+  };
+
+  // Handle Add to Cart
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    if (!user) {
+      navigate('/account'); // Redirect to SignUpPage if not logged in
+    } else {
+      // If logged in, add item to cart (logic to add item to cart goes here)
+      alert('Item added to cart!');
+    }
   };
 
   return (
@@ -97,16 +123,21 @@ const renderStars = (rating) => {
 
                 {/* Add to Cart Button */}
                 <button 
+                  onClick={handleAddToCart}
                   className="bg-blue-600 text-white px-3 py-1.5 rounded-full 
                              hover:bg-blue-700 transition-colors flex items-center text-sm"
                 >
                   <ShoppingCart className="mr-1 w-4 h-4" />
                   Add
                 </button>
-                <button
-                className="bg-blue-600 text-white px-3 py-1.5 rounded-full 
-                hover:bg-blue-700 transition-colors flex items-center text-sm"
-                ><Link to="/productDetails">View Details</Link></button>
+                {/* View Details Button */}
+                <Link 
+                  to={`/productDetails/${product.id}`} // Pass product id dynamically in the URL
+                  className="bg-blue-600 text-white px-3 py-1.5 rounded-full 
+                             hover:bg-blue-700 transition-colors flex items-center text-sm"
+                >
+                  View Details
+                </Link>
               </div>
             </div>
           </div>
