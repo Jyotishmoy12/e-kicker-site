@@ -1,4 +1,4 @@
-# Logs
+git remote add origin https://github.com/Jyotishmoy12/e-kicker-site.git# Logs
 logs
 *.log
 npm-debug.log*
