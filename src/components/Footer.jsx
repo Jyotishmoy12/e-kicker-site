@@ -8,6 +8,7 @@ import {
   Phone, 
   MapPin 
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -17,7 +18,7 @@ const Footer = () => {
           {/* Company Info */}
           <div>
             <h3 className="text-2xl font-bold text-yellow-400 mb-4">
-              OurCompany
+              E-KICKER
             </h3>
             <p className="text-blue-100 text-sm mb-4">
               Innovative solutions for your business needs. 
@@ -53,30 +54,20 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-xl font-semibold text-yellow-400 mb-4">
-              Quick Links
-            </h4>
-            <ul className="space-y-2">
-              {[
-                'Home', 
-                'About Us', 
-                'Services', 
-                'Products', 
-                'Contact'
-              ].map((link) => (
-                <li key={link}>
-                  <a 
-                    href="#" 
-                    className="text-blue-200 hover:text-yellow-300 
-                               transition-colors text-sm"
-                  >
-                    {link}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
+      <h4 className="text-xl font-semibold text-yellow-400 mb-4">Quick Links</h4>
+      <ul className="space-y-2">
+        {['Home', 'About Us', 'Careers', 'Services', 'Contact'].map((link) => (
+          <li key={link}>
+            <Link 
+              to={`/${link.toLowerCase().replace(' ', '-')}`} 
+              className="text-blue-200 hover:text-yellow-300 transition-colors text-sm"
+            >
+              {link}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
           {/* Services */}
           <div>
             <h4 className="text-xl font-semibold text-yellow-400 mb-4">
@@ -84,11 +75,10 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2">
               {[
-                'Web Development', 
-                'Mobile Apps', 
-                'Cloud Solutions', 
-                'Cybersecurity', 
-                'Data Analytics'
+                'Repairing', 
+                'House Wiring', 
+                'Project Prototyping', 
+                'R&D Project', 
               ].map((service) => (
                 <li key={service}>
                   <a 
@@ -136,7 +126,7 @@ const Footer = () => {
                         flex flex-col md:flex-row 
                         justify-between items-center">
           <p className="text-sm text-blue-200 mb-2 md:mb-0">
-            © 2024 OurCompany. All Rights Reserved.
+            © 2024 E-Kicker. All Rights Reserved.
           </p>
           <div className="flex space-x-4">
             <a 
