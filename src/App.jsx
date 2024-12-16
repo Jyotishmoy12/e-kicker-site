@@ -10,6 +10,7 @@ import Contact from './Pages/Contact'
 import AdminDashboard from './Pages/AdminDashboard'
 import PrivateRoute from './Pages/PrivateRoute'
 import CartPage from './Pages/CartPage'
+import CheckOutPage from './Pages/CheckOutPage'
 
 
 const App = () => {
@@ -25,6 +26,7 @@ const App = () => {
             <Route path="/services" element={<Services/>}/>
             <Route path="/contact" element={<Contact/>}/>
             <Route path="/cart" element={<CartPage/>}/>
+            <Route path="/checkout" element={<CheckOutPage/>}/>
             <Route path="/admin" element={
           <PrivateRoute adminOnly={true}>
             <AdminDashboard />
