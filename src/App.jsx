@@ -7,6 +7,9 @@ import AboutUs from './Pages/AboutUs'
 import Careers from './Pages/Careers'
 import Services from './Pages/Services'
 import Contact from './Pages/Contact'
+import AdminDashboard from './Pages/AdminDashboard'
+import PrivateRoute from './Pages/PrivateRoute'
+import CartPage from './Pages/CartPage'
 
 
 const App = () => {
@@ -21,6 +24,12 @@ const App = () => {
             <Route path="/careers" element={<Careers/>}/>
             <Route path="/services" element={<Services/>}/>
             <Route path="/contact" element={<Contact/>}/>
+            <Route path="/cart" element={<CartPage/>}/>
+            <Route path="/admin" element={
+          <PrivateRoute adminOnly={true}>
+            <AdminDashboard />
+          </PrivateRoute>
+        } />
         </Routes>
     </Router>
     </>

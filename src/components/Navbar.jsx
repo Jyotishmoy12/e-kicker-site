@@ -1,20 +1,62 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom'; // Import useLocation hook
 import { ShoppingCart, Menu, X } from 'lucide-react';
+import { getAuth } from 'firebase/auth'; // Assuming you're using Firebase for authentication.
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState(null);
+  const [cartCount, setCartCount] = useState(0);
 
-  const navItems = [
-    { to: '/', label: 'Home' },
-    // { to: '/productdetails', label: 'Productdetails' },
-    { to: '/r&d', label: 'Research' },
-    { to: '/bulk', label: 'Bulk' },
-    { to: '/account', label: 'Account' }
-  ];
+  const location = useLocation(); // Get current route
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  // Fetch the authenticated user's email and cart count
+  useEffect(() => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (user) {
+      setUserEmail(user.email); // Set the user's email
+
+      // Fetch the user's cart count from Firestore
+      const db = getFirestore();
+      const userCartRef = doc(db, 'carts', user.uid);
+      getDoc(userCartRef).then((docSnap) => {
+        if (docSnap.exists()) {
+          const cartData = docSnap.data();
+          setCartCount(cartData.items ? cartData.items.length : 0);
+        } else {
+          setCartCount(0); // No cart found
+        }
+      });
+    } else {
+      setUserEmail(null); // If no user is logged in
+      setCartCount(0); // Reset cart count if no user
+    }
+  }, []);
+
+  // Define navigation items conditionally
+  const navItems = [
+    { to: '/', label: 'Home' },
+    { to: '/r&d', label: 'Research' },
+    { to: '/bulk', label: 'Bulk' },
+    { to: '/account', label: 'Account' },
+    ...(userEmail === 'bhargab@gmail.com' ? [{ to: '/admin', label: 'Admin' }] : []),
+  ];
+
+  // Handle Logout
+  const handleLogout = () => {
+    const auth = getAuth();
+    auth.signOut().then(() => {
+      setUserEmail(null); // Clear user email state after logout
+    }).catch((error) => {
+      console.error("Logout error: ", error);
+    });
   };
 
   return (
@@ -62,12 +104,28 @@ const Header = () => {
               <Link 
                 to="/cart" 
                 className="bg-blue-600 text-white px-3 py-1.5 rounded-full 
-                           hover:bg-blue-700 transition-colors flex items-center text-sm"
+                           hover:bg-blue-700 transition-colors flex items-center text-sm relative"
               >
                 <ShoppingCart className="mr-1 w-4 h-4" />
                 Cart
+                {cartCount > 0 && (
+                  <span className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
               </Link>
             </li>
+            {/* Conditionally render logout button only for regular users */}
+            {userEmail && userEmail !== 'bhargab@gmail.com' && location.pathname === '/' && (
+              <li>
+                <button 
+                  onClick={handleLogout}
+                  className="bg-red-600 text-white px-3 py-1.5 rounded-full hover:bg-red-700"
+                >
+                  Logout
+                </button>
+              </li>
+            )}
           </ul>
         </nav>
 
@@ -97,18 +155,34 @@ const Header = () => {
                   to="/cart" 
                   onClick={toggleMenu}
                   className="bg-blue-600 text-white px-3 py-1.5 rounded-full 
-                             hover:bg-blue-700 transition-colors flex items-center text-sm"
+                             hover:bg-blue-700 transition-colors flex items-center text-sm relative"
                 >
                   <ShoppingCart className="mr-1 w-4 h-4" />
                   Cart
+                  {cartCount > 0 && (
+                    <span className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  )}
                 </Link>
               </li>
+              {/* Conditionally render logout button only for regular users */}
+              {userEmail && userEmail !== 'bhargab@gmail.com' && location.pathname === '/' && (
+                <li>
+                  <button 
+                    onClick={handleLogout}
+                    className="bg-red-600 text-white px-3 py-1.5 rounded-full hover:bg-red-700"
+                  >
+                    Logout
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
         )}
       </div>
     </header>
   );
-}
+};
 
 export default Header;
