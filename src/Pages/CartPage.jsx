@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { auth, db } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Trash2, ArrowLeft } from 'lucide-react';
 
 const CartPage = () => {
   const [user, setUser] = useState(null);
@@ -72,8 +72,8 @@ const CartPage = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-blue-50 to-blue-100">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-blue-600"></div>
       </div>
     );
   }
@@ -85,82 +85,97 @@ const CartPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <h2 className="text-2xl font-bold text-center mb-6 text-blue-800">Your Cart</h2>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden">
+        <div className="bg-blue-600 text-white py-6 px-6 flex items-center justify-between">
+          <h2 className="text-3xl font-extrabold tracking-tight">Your Cart</h2>
+          <ShoppingCart className="w-10 h-10" />
+        </div>
 
-      {cartItems.length === 0 ? (
-        <p className="text-center text-gray-600">Your cart is empty</p>
-      ) : (
-        <div className="space-y-4">
-          {cartItems.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center justify-between bg-white p-4 rounded-lg shadow-md"
+        {cartItems.length === 0 ? (
+          <div className="text-center py-16 px-6">
+            <p className="text-xl text-gray-500">Your cart is empty</p>
+            <Link 
+              to="/" 
+              className="mt-6 inline-block bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition duration-300 ease-in-out transform hover:scale-105"
             >
-              <div className="flex items-center space-x-4">
-                <img
-                  src={item.image || 'vite.svg'}
-                  alt={item.name}
-                  className="w-20 h-20 object-cover rounded-md"
-                />
-                <div>
-                  <h3 className="text-lg font-semibold text-blue-900">{item.name}</h3>
-                  <p className="text-sm text-gray-600">Price: ${(item.price || 0).toFixed(2)}</p>
-                  <div className="flex items-center space-x-2">
+              Continue Shopping
+            </Link>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-200">
+            {cartItems.map((item) => (
+              <div
+                key={item.id}
+                className="p-6 hover:bg-blue-50 transition duration-300 ease-in-out"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-6">
+                    <img
+                      src={item.image || 'vite.svg'}
+                      alt={item.name}
+                      className="w-24 h-24 object-cover rounded-xl shadow-lg"
+                    />
+                    <div>
+                      <h3 className="text-xl font-bold text-blue-900 mb-2">{item.name}</h3>
+                      <p className="text-gray-600 mb-3">Price: ${(item.price || 0).toFixed(2)}</p>
+                      <div className="flex items-center space-x-4 bg-blue-100 rounded-full px-2 py-1">
+                        <button
+                          onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                          disabled={item.quantity <= 1}
+                          className="text-blue-600 disabled:opacity-50 hover:bg-blue-200 rounded-full p-1 transition duration-300"
+                        >
+                          <Minus className="w-5 h-5" />
+                        </button>
+                        <span className="font-semibold text-blue-900 mx-2">{item.quantity}</span>
+                        <button
+                          onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                          className="text-blue-600 hover:bg-blue-200 rounded-full p-1 transition duration-300"
+                        >
+                          <Plus className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end space-y-3">
+                    <p className="text-2xl font-bold text-blue-800">
+                      ${(item.price * item.quantity).toFixed(2)}
+                    </p>
                     <button
-                      onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                      disabled={item.quantity <= 1}
-                      className="bg-blue-600 text-white px-2 py-1 rounded-full hover:bg-blue-700"
+                      onClick={() => handleRemoveItem(item.id)}
+                      className="text-red-500 hover:text-red-700 flex items-center space-x-1 group"
                     >
-                      -
-                    </button>
-                    <span>{item.quantity}</span>
-                    <button
-                      onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                      className="bg-blue-600 text-white px-2 py-1 rounded-full hover:bg-blue-700"
-                    >
-                      +
+                      <Trash2 className="w-5 h-5 group-hover:scale-110 transition duration-300" />
+                      <span className="text-sm">Remove</span>
                     </button>
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col items-end space-y-2">
-                <p className="text-lg font-bold text-blue-800">
-                  ${(item.price * item.quantity).toFixed(2)}
-                </p>
-                <button
-                  onClick={() => handleRemoveItem(item.id)}
-                  className="text-red-500 hover:text-red-700 text-sm"
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
 
-      <div className="mt-6 flex justify-between items-center">
-        <div>
-          <Link
-            to="/"
-            className="bg-gray-200 text-gray-800 px-4 py-2 rounded-full hover:bg-gray-300"
-          >
-            Continue Shopping
-          </Link>
-        </div>
-        <div className="text-xl font-semibold text-blue-800">
-          Total: ${(calculateTotal() || 0).toFixed(2)}
-        </div>
-        <div>
-          <Link
-            to="/checkout"
-            className="bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 flex items-center"
-          >
-            <ShoppingCart className="mr-2 w-5 h-5" />
-            Checkout
-          </Link>
-        </div>
+        {cartItems.length > 0 && (
+          <div className="bg-blue-50 p-6 flex justify-between items-center">
+            <Link
+              to="/"
+              className="flex items-center text-blue-600 hover:text-blue-800 transition duration-300 ease-in-out"
+            >
+              <ArrowLeft className="mr-2" />
+              Continue Shopping
+            </Link>
+            <div className="text-2xl font-bold text-blue-900">
+              Total: ${(calculateTotal() || 0).toFixed(2)}
+            </div>
+            <Link
+              to="/checkout"
+              className="bg-blue-600 text-white px-8 py-3 rounded-full hover:bg-blue-700 transition duration-300 ease-in-out transform hover:scale-105 flex items-center"
+            >
+              <ShoppingCart className="mr-2 w-6 h-6" />
+              Checkout
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
