@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../../firebase';
+import emailjs from '@emailjs/browser';
 
 const Careers = () => {
   const [applicationData, setApplicationData] = useState({
@@ -42,11 +43,21 @@ const Careers = () => {
 
     try {
       // Add application to Firestore
-      const docRef = await addDoc(collection(db, 'career-applications'), {
-        ...applicationData,
-        timestamp: new Date(),
-        resumeFileName: applicationData.resume ? applicationData.resume.name : null
-      });
+      const emailResponse = await emailjs.send(
+        'service_795rm1q', // Replace with your EmailJS Service ID
+        'template_nhrclg9', // Replace with your EmailJS Template ID
+        {
+          fullName: applicationData.fullName,
+          email: applicationData.email,
+          phone: applicationData.phone,
+          educationLevel: applicationData.educationLevel,
+          appliedFor: applicationData.appliedFor,
+          message: applicationData.message,
+        },
+        'eYdPp2gl41DbXPN05' // Replace with your EmailJS Public Key
+      );
+  
+      console.log('Email sent successfully:', emailResponse);
 
       // Reset form
       setApplicationData({
@@ -253,21 +264,6 @@ const Careers = () => {
               <option value="research">Research & Development</option>
             </select>
           </div>
-
-          {/* <div>
-            <label htmlFor="resume" className="block text-gray-700 mb-2">
-              Upload Resume
-            </label>
-            <input
-              type="file"
-              id="resume"
-              name="resume"
-              accept=".pdf,.doc,.docx"
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div> */}
 
           <div>
             <label htmlFor="message" className="block text-gray-700 mb-2">

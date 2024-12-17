@@ -26,6 +26,14 @@ const AdminDashboard = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const navigate = useNavigate();
+  const [documents, setDocuments] = useState([]);
+  const [newDocument, setNewDocument] = useState({
+    title: '',
+    description: '',
+    category: '',
+    fileUrl: '',
+  });
+  const [documentFile, setDocumentFile] = useState(null);
 
   // Utility function to safely convert to number
   const safeParseFloat = (value, defaultValue = 0) => {
@@ -34,41 +42,92 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
-    // Check if user is logged in and is the admin
     const checkAdminAccess = () => {
-      
       const user = auth.currentUser;
       if (!user || user.email !== 'bhargab@gmail.com') {
-        // Redirect to login if not admin
         navigate('/account');
         return false;
       }
       return true;
     };
 
-    // Fetch products if admin
-    const loadProducts = async () => {
+    const loadData = async () => {
       if (checkAdminAccess()) {
         try {
+          // Load Products
           const productsCollection = collection(db, 'products');
           const productSnapshot = await getDocs(productsCollection);
           const productList = productSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
-            // Ensure numeric values
             price: safeParseFloat(doc.data().price),
             originalPrice: safeParseFloat(doc.data().originalPrice),
             ratings: safeParseFloat(doc.data().ratings)
           }));
           setProducts(productList);
+
+          // Load Documents
+          const documentsCollection = collection(db, 'r&d-documents');
+          const documentSnapshot = await getDocs(documentsCollection);
+          const documentList = documentSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setDocuments(documentList);
         } catch (error) {
-          console.error('Error fetching products:', error);
+          console.error('Error loading data:', error);
         }
       }
     };
 
-    loadProducts();
+    loadData();
   }, [navigate]);
+
+
+  const handleDocumentUpload = async (e) => {
+    e.preventDefault();
+    try {
+      if (!documentFile) {
+        alert('Please select a document to upload');
+        return;
+      }
+
+      const storageRef = ref(storage, `r&d-documents/${Date.now()}_${documentFile.name}`);
+      const snapshot = await uploadBytes(storageRef, documentFile);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      const docRef = await addDoc(collection(db, 'r&d-documents'), {
+        ...newDocument,
+        fileUrl: downloadURL,
+        fileName: documentFile.name,
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: auth.currentUser.email
+      });
+
+      setDocuments([...documents, { 
+        id: docRef.id, 
+        ...newDocument,
+        fileUrl: downloadURL,
+        fileName: documentFile.name,
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: auth.currentUser.email
+      }]);
+
+      // Reset form
+      setNewDocument({
+        title: '',
+        description: '',
+        category: '',
+        fileUrl: '',
+      });
+      setDocumentFile(null);
+
+      alert('Document uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      alert('Failed to upload document');
+    }
+  };
 
   // Handle image file selection
   const handleImageChange = (e) => {
@@ -81,6 +140,24 @@ const AdminDashboard = () => {
         setImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+
+  const handleDocumentFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setDocumentFile(file);
+    }
+  };
+
+  const handleDeleteDocument = async (documentId) => {
+    try {
+      await deleteDoc(doc(db, 'r&d-documents', documentId));
+      setDocuments(documents.filter(d => d.id !== documentId));
+      alert('Document deleted successfully');
+    } catch (error) {
+      console.error('Error deleting document:', error);
     }
   };
 
@@ -186,6 +263,8 @@ const AdminDashboard = () => {
     }
   };
 
+
+  
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
@@ -376,6 +455,91 @@ const AdminDashboard = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-2xl font-semibold mb-4">R&D Document Upload</h2>
+        <form 
+          onSubmit={handleDocumentUpload}
+          className="bg-white p-6 rounded-lg shadow-md mb-6"
+        >
+          <div className="grid grid-cols-2 gap-4">
+            <input
+              type="text"
+              placeholder="Document Title"
+              value={newDocument.title}
+              onChange={(e) => setNewDocument({...newDocument, title: e.target.value})}
+              className="border p-2 rounded"
+              required
+            />
+            <input
+              type="text"
+              placeholder="Description"
+              value={newDocument.description}
+              onChange={(e) => setNewDocument({...newDocument, description: e.target.value})}
+              className="border p-2 rounded"
+              required
+            />
+            <input
+              type="text"
+              placeholder="Category"
+              value={newDocument.category}
+              onChange={(e) => setNewDocument({...newDocument, category: e.target.value})}
+              className="border p-2 rounded"
+              required
+            />
+            <div className="col-span-2 flex items-center space-x-4">
+              <input
+                type="file"
+                onChange={handleDocumentFileChange}
+                className="border p-2 rounded w-full"
+                required
+              />
+            </div>
+          </div>
+          <div className="mt-4">
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+            >
+              <Upload className="mr-2" /> Upload Document
+            </button>
+          </div>
+        </form>
+
+        {/* Document List */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {documents.map((doc) => (
+            <div 
+              key={doc.id} 
+              className="bg-white rounded-lg shadow-md p-4"
+            >
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-lg font-semibold">{doc.title}</h3>
+                <button
+                  onClick={() => handleDeleteDocument(doc.id)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  <Trash2 />
+                </button>
+              </div>
+              <p className="text-gray-600 mb-2">{doc.description}</p>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">
+                  Category: {doc.category}
+                </span>
+                <a
+                  href={doc.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 flex items-center"
+                >
+                  <FileText className="mr-1" /> Download
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
