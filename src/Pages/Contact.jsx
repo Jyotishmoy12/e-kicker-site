@@ -4,15 +4,17 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import {db} from '../../firebase';
+import emailjs from "@emailjs/browser"
 
 const Contact = () => {
-  const [formData, setFormData] = useState({
-    name: '',
+  const [applicationData, setApplicationData] = useState({
+    fullName: '',  // Changed name to fullName
     email: '',
     phone: '',
     subject: '',
     message: ''
   });
+  
   const [submitStatus, setSubmitStatus] = useState({
     isLoading: false,
     success: false,
@@ -21,7 +23,7 @@ const Contact = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevState => ({
+    setApplicationData(prevState => ({
       ...prevState,
       [name]: value
     }));
@@ -31,20 +33,27 @@ const Contact = () => {
     e.preventDefault();
     setSubmitStatus({ isLoading: true, success: false, error: null });
 
-    try {
       // Add form data to Firestore
-      const docRef = await addDoc(collection(db, 'contact-submissions'), {
-        ...formData,
-        timestamp: new Date()
-      });
-
-      // Call Firebase Cloud Function to send email
-      const sendContactEmail = httpsCallable(functions, 'sendContactEmail');
-      await sendContactEmail(formData);
+      try {
+        // Add application to Firestore
+        const emailResponse = await emailjs.send(
+          'service_795rm1q', // Replace with your EmailJS Service ID
+          'template_9c7q4q7', // Replace with your EmailJS Template ID
+          {
+            fullName: applicationData.fullName,
+            email: applicationData.email,
+            phone: applicationData.phone,
+            subject: applicationData.subject,
+            message: applicationData.message,
+          },
+          'eYdPp2gl41DbXPN05' // Replace with your EmailJS Public Key
+        );
+    
+        console.log('Email sent successfully:', emailResponse);
 
       // Reset form and show success message
-      setFormData({
-        name: '',
+      setApplicationData({
+        fullName: '',
         email: '',
         phone: '',
         subject: '',
@@ -134,8 +143,8 @@ const Contact = () => {
               <input
                 type="text"
                 id="name"
-                name="name"
-                value={formData.name}
+                name="fullName"
+                value={applicationData.fullName}
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -149,7 +158,7 @@ const Contact = () => {
                 type="email"
                 id="email"
                 name="email"
-                value={formData.email}
+                value={applicationData.email}
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -163,7 +172,7 @@ const Contact = () => {
                 type="tel"
                 id="phone"
                 name="phone"
-                value={formData.phone}
+                value={applicationData.phone}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="(123) 456-7890"
@@ -175,7 +184,7 @@ const Contact = () => {
               <select
                 id="subject"
                 name="subject"
-                value={formData.subject}
+                value={applicationData.subject}
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -194,7 +203,7 @@ const Contact = () => {
               <textarea
                 id="message"
                 name="message"
-                value={formData.message}
+                value={applicationData.message}
                 onChange={handleChange}
                 required
                 rows="4"
