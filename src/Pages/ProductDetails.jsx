@@ -12,8 +12,8 @@ import {
 } from 'lucide-react';
 import { db, auth } from '../../firebase';
 import { doc, getDoc, addDoc, collection } from 'firebase/firestore';
-import Navbar from "../components/navbar"
-import Footer from "../components/footer"
+import Navbar from "../components/Navbar"
+import Footer from "../components/Footer"
 
 const ProductDetails = () => {
   const { id } = useParams();
