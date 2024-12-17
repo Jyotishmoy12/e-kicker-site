@@ -288,7 +288,6 @@ const Header = () => {
                   )}
                 </Link>
               </li>
-              {/* Conditionally render logout button only for regular users */}
               {userEmail && userEmail !== 'bhargab@gmail.com' && location.pathname === '/' && (
                 <li>
                   <button 
