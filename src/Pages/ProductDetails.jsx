@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ShoppingCart, 
   Heart, 
@@ -10,56 +10,60 @@ import {
   ChevronLeft, 
   ChevronRight 
 } from 'lucide-react';
+import { db, auth } from '../../firebase';
+import { doc, getDoc, addDoc, collection } from 'firebase/firestore';
+import Navbar from "../components/navbar"
+import Footer from "../components/footer"
 
 const ProductDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Mock product data (replace with actual data fetching)
   useEffect(() => {
-    const products = [
-      { 
-        id: 1, 
-        name: "Classic Smartphone Pro", 
-        brand: "TechGiant",
-        description: "Experience cutting-edge technology with our advanced smartphone featuring a stunning display and powerful performance.",
-        price: 599.99, 
-        originalPrice: 699.99, 
-        discountPercentage: 14,
-        rating: 4.5, 
-        totalReviews: 256, 
-        images: [
-          "https://via.placeholder.com/600x400?text=Phone+Front",
-          "https://via.placeholder.com/600x400?text=Phone+Back",
-          "https://via.placeholder.com/600x400?text=Phone+Side"
-        ],
-        specifications: {
-          display: '6.7" Super AMOLED',
-          processor: 'Octa-core 3.0 GHz',
-          ram: '8GB',
-          storage: ['128GB', '256GB', '512GB'],
-          camera: {
-            rear: '108MP Triple Camera',
-            front: '32MP Selfie Camera'
-          },
-          battery: '5000 mAh',
-          network: '5G Enabled'
-        },
-        features: [
-          "Advanced AI Photography",
-          "Water & Dust Resistant",
-          "Fast Charging Support",
-          "Face & Fingerprint Unlock"
-        ],
-        inStock: true
-      }
-    ];
+    // Check user authentication
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+    });
 
-    const selectedProduct = products.find(p => p.id === parseInt(id));
-    setProduct(selectedProduct);
-  }, [id]);
+    // Fetch specific product details from Firestore
+    const fetchProductDetails = async () => {
+      try {
+        const productRef = doc(db, 'products', id);
+        const productSnap = await getDoc(productRef);
+
+        if (productSnap.exists()) {
+          const productData = {
+            id: productSnap.id,
+            ...productSnap.data(),
+            price: parseFloat(productSnap.data().price || 0),
+            originalPrice: parseFloat(productSnap.data().originalPrice || 0),
+            ratings: parseFloat(productSnap.data().ratings || 0),
+            // Ensure images is an array, fallback to empty array
+            images: productSnap.data().images || [productSnap.data().image || 'vite.svg']
+          };
+          setProduct(productData);
+        } else {
+          console.error('No such product!');
+          navigate('/products');
+        }
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching product details:', error);
+        setLoading(false);
+        navigate('/products');
+      }
+    };
+
+    fetchProductDetails();
+
+    // Cleanup subscription
+    return () => unsubscribe();
+  }, [id, navigate]);
 
   const handleImageChange = (direction) => {
     if (direction === 'next') {
@@ -73,9 +77,64 @@ const ProductDetails = () => {
     }
   };
 
-  if (!product) return <div>Loading...</div>;
+  const handleAddToCart = async () => {
+    if (!user) {
+      navigate('/account');
+      return;
+    }
+
+    try {
+      const cartCollection = collection(db, 'users', user.uid, 'cart');
+      await addDoc(cartCollection, {
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images[0],
+        quantity: quantity
+      });
+      alert('Item added to cart!');
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('Failed to add item to cart');
+    }
+  };
+
+  const handleAddToWishlist = async () => {
+    if (!user) {
+      navigate('/account');
+      return;
+    }
+
+    try {
+      const wishlistCollection = collection(db, 'users', user.uid, 'wishlist');
+      await addDoc(wishlistCollection, {
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images[0]
+      });
+      alert('Item added to wishlist!');
+    } catch (error) {
+      console.error('Error adding to wishlist:', error);
+      alert('Failed to add item to wishlist');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return <div className="text-center mt-8">Product not found</div>;
+  }
 
   return (
+    <>
+    <Navbar/>
     <div className="container mx-auto px-4 py-8">
       <div className="grid md:grid-cols-2 gap-8">
         {/* Image Gallery Section */}
@@ -87,32 +146,38 @@ const ProductDetails = () => {
               className="w-full h-[500px] object-cover"
             />
             {/* Image Navigation Buttons */}
-            <button 
-              onClick={() => handleImageChange('prev')}
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/50 p-2 rounded-full"
-            >
-              <ChevronLeft />
-            </button>
-            <button 
-              onClick={() => handleImageChange('next')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/50 p-2 rounded-full"
-            >
-              <ChevronRight />
-            </button>
+            {product.images.length > 1 && (
+              <>
+                <button 
+                  onClick={() => handleImageChange('prev')}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/50 p-2 rounded-full"
+                >
+                  <ChevronLeft />
+                </button>
+                <button 
+                  onClick={() => handleImageChange('next')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/50 p-2 rounded-full"
+                >
+                  <ChevronRight />
+                </button>
+              </>
+            )}
           </div>
           {/* Thumbnail Preview */}
-          <div className="flex justify-center space-x-2 mt-4">
-            {product.images.map((img, index) => (
-              <img 
-                key={index}
-                src={img}
-                alt={`Thumbnail ${index + 1}`}
-                className={`w-16 h-16 object-cover rounded cursor-pointer 
-                  ${currentImageIndex === index ? 'border-2 border-blue-500' : 'opacity-50'}`}
-                onClick={() => setCurrentImageIndex(index)}
-              />
-            ))}
-          </div>
+          {product.images.length > 1 && (
+            <div className="flex justify-center space-x-2 mt-4">
+              {product.images.map((img, index) => (
+                <img 
+                  key={index}
+                  src={img}
+                  alt={`Thumbnail ${index + 1}`}
+                  className={`w-16 h-16 object-cover rounded cursor-pointer 
+                    ${currentImageIndex === index ? 'border-2 border-blue-500' : 'opacity-50'}`}
+                  onClick={() => setCurrentImageIndex(index)}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Product Information Section */}
@@ -123,23 +188,26 @@ const ProductDetails = () => {
               {[...Array(5)].map((_, i) => (
                 <Star 
                   key={i} 
-                  className={i < Math.floor(product.rating) ? 'fill-current' : 'text-gray-300'}
+                  className={i < Math.floor(product.ratings) ? 'fill-current' : 'text-gray-300'}
                 />
               ))}
             </div>
             <span className="ml-2 text-gray-600">
-              ({product.totalReviews} Reviews)
+              ({product.ratings.toFixed(1)} Rating)
             </span>
           </div>
 
           {/* Pricing */}
           <div className="mt-4 flex items-center">
-            <span className="text-3xl font-bold text-blue-600">${product.price}</span>
-            <span className="ml-4 line-through text-gray-500">${product.originalPrice}</span>
+            <span className="text-3xl font-bold text-blue-600">${product.price.toFixed(2)}</span>
+            <span className="ml-4 line-through text-gray-500">${product.originalPrice.toFixed(2)}</span>
             <span className="ml-4 bg-green-100 text-green-800 px-2 py-1 rounded-full">
-              {product.discountPercentage}% OFF
+              {((1 - product.price / product.originalPrice) * 100).toFixed(0)}% OFF
             </span>
           </div>
+
+          {/* Product Description */}
+          <p className="mt-4 text-gray-600">{product.description}</p>
 
           {/* Product Highlights */}
           <div className="mt-6 space-y-4">
@@ -180,11 +248,13 @@ const ProductDetails = () => {
           {/* Action Buttons */}
           <div className="mt-6 flex space-x-4">
             <button 
+              onClick={handleAddToCart}
               className="flex items-center bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
             >
               <ShoppingCart className="mr-2" /> Add to Cart
             </button>
             <button 
+              onClick={handleAddToWishlist}
               className="flex items-center border border-blue-600 text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50 transition"
             >
               <Heart className="mr-2" /> Add to Wishlist
@@ -195,36 +265,41 @@ const ProductDetails = () => {
 
       {/* Additional Product Details */}
       <div className="mt-12">
-        <h2 className="text-2xl font-bold mb-4">Product Specifications</h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="font-semibold mb-2">Technical Details</h3>
-            <ul className="space-y-2">
-              <li>Display: {product.specifications.display}</li>
-              <li>Processor: {product.specifications.processor}</li>
-              <li>RAM: {product.specifications.ram}</li>
-              <li>Storage Options: {product.specifications.storage.join(', ')}</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Camera</h3>
-            <ul className="space-y-2">
-              <li>Rear Camera: {product.specifications.camera.rear}</li>
-              <li>Front Camera: {product.specifications.camera.front}</li>
-            </ul>
-          </div>
+        <h2 className="text-2xl font-bold mb-4">Product Details</h2>
+        <div className="bg-gray-50 p-6 rounded-lg">
+          <p className="text-gray-700">{product.longDescription || product.description}</p>
         </div>
 
-        <div className="mt-6">
-          <h3 className="font-semibold mb-2">Key Features</h3>
-          <ul className="list-disc list-inside space-y-2">
-            {product.features.map((feature, index) => (
-              <li key={index}>{feature}</li>
-            ))}
-          </ul>
-        </div>
+        {/* Additional Specifications or Features if available */}
+        {(product.specifications || product.features) && (
+          <div className="mt-8">
+            <h3 className="text-xl font-semibold mb-4">Additional Information</h3>
+            {product.specifications && (
+              <div className="grid md:grid-cols-2 gap-4">
+                {Object.entries(product.specifications).map(([key, value]) => (
+                  <div key={key} className="bg-white p-4 rounded shadow-sm">
+                    <h4 className="font-medium text-gray-700 capitalize">{key}</h4>
+                    <p className="text-gray-600">{value}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {product.features && (
+              <div className="mt-4">
+                <h4 className="font-semibold mb-2">Key Features</h4>
+                <ul className="list-disc list-inside space-y-2 text-gray-700">
+                  {product.features.map((feature, index) => (
+                    <li key={index}>{feature}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
+    <Footer/>
+    </>
   );
 };
 

@@ -1,46 +1,109 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom'; // Import useLocation hook
-import { ShoppingCart, Menu, X } from 'lucide-react';
-import { getAuth } from 'firebase/auth'; // Assuming you're using Firebase for authentication.
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { Link, useLocation } from 'react-router-dom';
+import { ShoppingCart, Menu, X, Search } from 'lucide-react';
+import { getAuth } from 'firebase/auth';
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userEmail, setUserEmail] = useState(null);
   const [cartCount, setCartCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const location = useLocation(); // Get current route
+  const location = useLocation();
+  const auth = getAuth();
+  const db = getFirestore();
+
+  // Routes where search bar is visible
+  const searchVisibleRoutes = ['/', '/products'];
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // Fetch the authenticated user's email and cart count
   useEffect(() => {
-    const auth = getAuth();
     const user = auth.currentUser;
 
     if (user) {
-      setUserEmail(user.email); // Set the user's email
+      setUserEmail(user.email);
 
-      // Fetch the user's cart count from Firestore
-      const db = getFirestore();
-      const userCartRef = doc(db, 'carts', user.uid);
-      getDoc(userCartRef).then((docSnap) => {
-        if (docSnap.exists()) {
-          const cartData = docSnap.data();
-          setCartCount(cartData.items ? cartData.items.length : 0);
-        } else {
-          setCartCount(0); // No cart found
+      const fetchCartCount = async () => {
+        try {
+          const cartCollection = collection(db, 'users', user.uid, 'cart');
+          const cartSnapshot = await getDocs(cartCollection);
+          setCartCount(cartSnapshot.size);
+        } catch (error) {
+          console.error('Error fetching cart count:', error);
         }
-      });
-    } else {
-      setUserEmail(null); // If no user is logged in
-      setCartCount(0); // Reset cart count if no user
-    }
-  }, []);
+      };
 
-  // Define navigation items conditionally
+      fetchCartCount();
+    } else {
+      setUserEmail(null);
+      setCartCount(0);
+    }
+  }, [auth, db]);
+
+  const handleSearch = async (term) => {
+    if (term.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const productsRef = collection(db, 'products');
+      
+      const nameQuery = query(
+        productsRef, 
+        where('name', '>=', term.toLowerCase()),
+        where('name', '<=', term.toLowerCase() + '\uf8ff')
+      );
+
+      const categoryQuery = query(
+        productsRef,
+        where('category', '>=', term.toLowerCase()),
+        where('category', '<=', term.toLowerCase() + '\uf8ff')
+      );
+
+      const [nameSnapshot, categorySnapshot] = await Promise.all([
+        getDocs(nameQuery),
+        getDocs(categoryQuery)
+      ]);
+
+      const results = new Map();
+      
+      nameSnapshot.forEach(doc => {
+        results.set(doc.id, { id: doc.id, ...doc.data() });
+      });
+
+      categorySnapshot.forEach(doc => {
+        results.set(doc.id, { id: doc.id, ...doc.data() });
+      });
+
+      const searchResults = Array.from(results.values()).slice(0, 5);
+      
+      setSearchResults(searchResults);
+    } catch (error) {
+      console.error("Search error:", error);
+      setSearchResults([]);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+    handleSearch(term);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm('');
+    setSearchResults([]);
+    setIsSearching(false);
+  };
+
   const navItems = [
     { to: '/', label: 'Home' },
     { to: '/r&d', label: 'Research' },
@@ -49,27 +112,86 @@ const Header = () => {
     ...(userEmail === 'bhargab@gmail.com' ? [{ to: '/admin', label: 'Admin' }] : []),
   ];
 
-  // Handle Logout
   const handleLogout = () => {
-    const auth = getAuth();
     auth.signOut().then(() => {
-      setUserEmail(null); // Clear user email state after logout
+      setUserEmail(null);
     }).catch((error) => {
       console.error("Logout error: ", error);
     });
   };
 
   return (
-    <header className="bg-blue-50 shadow-md">
-      <div className="container mx-auto max-w-screen-xl flex items-center justify-between py-4 px-6 relative">
+    <header className="bg-blue-50 shadow-md relative">
+      <div className="container mx-auto max-w-screen-xl flex items-center justify-between py-4 px-6">
         {/* Logo */}
         <div className="flex items-center">
           <img 
             className="h-20 w-40 mr-6 hover:scale-105 transition-transform duration-300" 
-            src="e-kickerhd.png" 
+            src="/e-kickerhd.png" 
             alt="logo" 
           />
         </div>
+
+        {/* Conditionally render search bar on specific routes */}
+        {searchVisibleRoutes.includes(location.pathname) && (
+          <div className="flex-grow max-w-md mx-4 relative">
+            <div className="relative">
+              <input 
+                type="text" 
+                placeholder="Search products..." 
+                value={searchTerm}
+                onChange={handleInputChange}
+                onFocus={() => searchResults.length > 0 && setIsSearching(true)}
+                className="w-full pl-10 pr-10 py-2 border border-blue-300 rounded-full 
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 
+                           transition-all duration-300 text-sm"
+              />
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                <Search className="text-blue-500 w-5 h-5" />
+              </div>
+              {searchTerm && (
+                <button 
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                >
+                  <X className="text-gray-500 w-5 h-5 hover:text-red-500" />
+                </button>
+              )}
+            </div>
+
+            {isSearching && searchResults.length > 0 && (
+              <div 
+                className="absolute z-50 w-full mt-2 bg-white 
+                           border border-blue-200 rounded-lg shadow-xl 
+                           max-h-[300px] overflow-y-auto"
+              >
+                {searchResults.map((product) => (
+                  <Link 
+                    to={`/productDetails/${product.id}`}
+                    key={product.id}
+                    onClick={clearSearch}
+                    className="flex items-center p-3 hover:bg-blue-50 
+                               transition-colors duration-200 border-b last:border-b-0"
+                  >
+                    <img 
+                      src={product.image || 'default-image.png'} 
+                      alt={product.name} 
+                      className="w-12 h-12 object-cover rounded mr-4"
+                    />
+                    <div>
+                      <h3 className="font-semibold text-blue-900 text-sm">
+                        {product.name}
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        ${product.price.toFixed(2)}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Hamburger Menu for Mobile */}
         <div className="md:hidden">
@@ -83,7 +205,7 @@ const Header = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:block">
-          <ul className="flex space-x-6">
+          <ul className="flex space-x-6 items-center">
             {navItems.map(({ to, label }) => (
               <li key={to}>
                 <Link 
