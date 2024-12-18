@@ -17,13 +17,19 @@ const CheckoutPage = () => {
     address: '',
     city: '',
     state: '',
-    zipCode: '',
+    zipCode: '',  // Pincode field
     cardNumber: '',
     expiryDate: '',
     cvv: ''
   });
+  const [isPincodeValid, setIsPincodeValid] = useState(true);  // Track pincode validity
+
+  const validPincodes = ['110001', '110002', '110003']; // Add valid pincodes here
 
   const navigate = useNavigate();
+  
+  const googleFormUrl = "https://docs.google.com/forms/d/e/1FAIpQLSdU-1MiVmWSIqFtFKUDEBJbPc26IqpncSZ-CfVf5Haw8zHORQ/viewform" // Replace with your Google Form URL
+  
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -71,49 +77,44 @@ const CheckoutPage = () => {
       ...prev,
       [name]: value,
     }));
-  };
-
-  const handleSubmitOrder = async (e) => {
-    e.preventDefault();
-    if (!user) return;
-
-    try {
-      const orderData = {
-        userId: user.uid,
-        items: cartItems,
-        total: calculateTotal(),
-        shippingInfo: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          zipCode: formData.zipCode,
-        },
-        paymentInfo: {
-          cardLastFour: formData.cardNumber.slice(-4),
-          expiryDate: formData.expiryDate,
-        },
-        status: 'Pending',
-        createdAt: new Date(),
-      };
-
-      const ordersCollection = collection(db, 'orders');
-      const orderDocRef = await addDoc(ordersCollection, orderData);
-
-      const cartCollection = collection(db, 'users', user.uid, 'cart');
-      const cartSnapshot = await getDocs(cartCollection);
-      cartSnapshot.docs.forEach(async (cartDoc) => {
-        await deleteDoc(doc(db, 'users', user.uid, 'cart', cartDoc.id));
-      });
-
-      navigate(`/order-confirmation/${orderDocRef.id}`);
-    } catch (error) {
-      console.error('Error submitting order:', error);
-      alert('Failed to submit order. Please try again.');
+    
+    if (name === 'zipCode') {
+      // Check if entered pincode is valid
+      if (validPincodes.includes(value)) {
+        setIsPincodeValid(true);
+      } else {
+        setIsPincodeValid(false);
+      }
     }
   };
+
+  const handleSubmitOrder = async () => {
+    if (!isPincodeValid) {
+      alert('Invalid Pincode! You cannot place the order.');
+      return;
+    }
+  
+    try {
+      // Clear the cart in Firestore
+      const cartCollection = collection(db, 'users', user.uid, 'cart');
+      const cartSnapshot = await getDocs(cartCollection);
+      const cartDocs = cartSnapshot.docs;
+  
+      // Delete each cart item
+      for (const cartDoc of cartDocs) {
+        await deleteDoc(doc(db, 'users', user.uid, 'cart', cartDoc.id));
+      }
+  
+      // Redirect to the cart page
+      navigate('/cart');
+    } catch (error) {
+      console.error('Error clearing the cart:', error);
+    }
+  
+    // Redirect to Google Form (or proceed as necessary)
+    window.open(googleFormUrl, "_blank");
+  };
+  
 
   if (loading) {
     return (
@@ -153,7 +154,7 @@ const CheckoutPage = () => {
                     </div>
                   </div>
                   <p className="font-bold text-blue-800">
-                  ₹{(item.price * item.quantity).toFixed(2)}
+                    ₹{(item.price * item.quantity).toFixed(2)}
                   </p>
                 </div>
               ))}
@@ -161,7 +162,7 @@ const CheckoutPage = () => {
             <div className="mt-6 pt-6 border-t border-blue-200 flex justify-between">
               <span className="text-xl font-bold text-blue-900">Total</span>
               <span className="text-2xl font-extrabold text-blue-800">
-              ₹{calculateTotal().toFixed(2)}
+                ₹{calculateTotal().toFixed(2)}
               </span>
             </div>
           </div>
@@ -173,133 +174,51 @@ const CheckoutPage = () => {
             <form onSubmit={handleSubmitOrder} className="space-y-6">
               {/* Form fields */}
               <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-blue-900 mb-2">First Name</label>
-                <input 
-                  type="text" 
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div>
+                  <label className="block text-blue-900 mb-2">First Name</label>
+                  <input 
+                    type="text" 
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-blue-900 mb-2">Last Name</label>
+                  <input 
+                    type="text" 
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-blue-900 mb-2">Last Name</label>
-                <input 
-                  type="text" 
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
 
-            <div>
-              <label className="block text-blue-900 mb-2">Email</label>
-              <input 
-                type="email" 
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-                disabled
-                className="w-full px-4 py-2 border border-blue-200 rounded-lg bg-gray-100 text-gray-600"
-              />
-            </div>
-
-            <div>
-              <label className="block text-blue-900 mb-2">Address</label>
-              <input 
-                type="text" 
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-blue-900 mb-2">City</label>
-                <input 
-                  type="text" 
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-blue-900 mb-2">State</label>
-                <input 
-                  type="text" 
-                  name="state"
-                  value={formData.state}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-blue-900 mb-2">Zip Code</label>
-                <input 
-                  type="text" 
+              {/* Other fields */}
+              {/* <div>
+                <label className="block text-blue-900 mb-2">Pincode (Zip Code)</label>
+                <input
+                  type="text"
                   name="zipCode"
                   value={formData.zipCode}
                   onChange={handleInputChange}
                   required
                   className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-              </div>
-            </div>
+                {!isPincodeValid && (
+                  <p className="text-red-500 text-sm">Invalid Pincode! Please enter a valid pincode.</p>
+                )}
+              </div> */}
 
-            <div>
-              <label className="block text-blue-900 mb-2">Card Number</label>
-              <input 
-                type="text" 
-                name="cardNumber"
-                value={formData.cardNumber}
-                onChange={handleInputChange}
-                required
-                placeholder="**** **** **** ****"
-                className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-blue-900 mb-2">Expiry Date</label>
-                <input 
-                  type="text" 
-                  name="expiryDate"
-                  value={formData.expiryDate}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="MM/YY"
-                  className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-blue-900 mb-2">CVV</label>
-                <input 
-                  type="text" 
-                  name="cvv"
-                  value={formData.cvv}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="***"
-                  className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            <button
-                type="submit"
-                className="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700"
+              <button
+                type="button"
+                onClick={handleSubmitOrder}
+                // disabled={!isPincodeValid}
+                className={`w-full py-3 font-bold rounded-lg ${isPincodeValid ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-400 text-gray-200 cursor-not-allowed'}`}
               >
                 Place Order
               </button>
