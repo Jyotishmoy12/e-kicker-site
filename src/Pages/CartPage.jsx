@@ -118,7 +118,7 @@ const CartPage = () => {
                     />
                     <div>
                       <h3 className="text-xl font-bold text-blue-900 mb-2">{item.name}</h3>
-                      <p className="text-gray-600 mb-3">Price: ${(item.price || 0).toFixed(2)}</p>
+                      <p className="text-gray-600 mb-3">Price: ₹{(item.price || 0).toFixed(2)}</p>
                       <div className="flex items-center space-x-4 bg-blue-100 rounded-full px-2 py-1">
                         <button
                           onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
@@ -139,7 +139,7 @@ const CartPage = () => {
                   </div>
                   <div className="flex flex-col items-end space-y-3">
                     <p className="text-2xl font-bold text-blue-800">
-                      ${(item.price * item.quantity).toFixed(2)}
+                    ₹{(item.price * item.quantity).toFixed(2)}
                     </p>
                     <button
                       onClick={() => handleRemoveItem(item.id)}
@@ -165,7 +165,7 @@ const CartPage = () => {
               Continue Shopping
             </Link>
             <div className="text-2xl font-bold text-blue-900">
-              Total: ${(calculateTotal() || 0).toFixed(2)}
+              Total: ₹{(calculateTotal() || 0).toFixed(2)}
             </div>
             <Link
               to="/checkout"

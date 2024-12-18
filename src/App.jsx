@@ -11,7 +11,8 @@ import AdminDashboard from './Pages/AdminDashboard'
 import PrivateRoute from './Pages/PrivateRoute'
 import CartPage from './Pages/CartPage'
 import RDPage from './Pages/RDPage'
-// import CheckOutPage from './Pages/CheckOutPage'
+import CheckOutPage from './Pages/CheckOutPage.jsx'
+import OrderConfirmationPage from './Pages/OrderConfirmationPage.jsx'
 
 
 const App = () => {
@@ -28,7 +29,8 @@ const App = () => {
             <Route path="/contact" element={<Contact/>}/>
             <Route path="/cart" element={<CartPage/>}/>
             <Route path ="/r&d" element={<RDPage/>}/>
-            {/* <Route path="/checkout" element={<CheckOutPage/>}/> */}
+            <Route path="/checkout" element={<CheckOutPage/>}/>
+            <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
             <Route path="/admin" element={
           <PrivateRoute adminOnly={true}>
             <AdminDashboard />
