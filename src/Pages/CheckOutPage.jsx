@@ -222,6 +222,8 @@ const CheckoutPage = () => {
               >
                 Place Order
               </button>
+              
+              <p className="font-serif font-bold">Note: Please be aware that we are currently using Google Forms for orders. Therefore, kindly keep track of your order, as your cart will be emptied once you click on "Place Order"! </p>
             </form>
           </div>
         </div>
