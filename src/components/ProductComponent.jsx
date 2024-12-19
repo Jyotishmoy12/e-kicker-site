@@ -3,22 +3,22 @@ import { ShoppingCart, Heart } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth, db } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, where } from 'firebase/firestore';
+import { toast } from 'react-toastify';
 
 const ProductComponent = () => {
   const [user, setUser] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cartCount, setCartCount] = useState(0);
+  const [wishlistItems, setWishlistItems] = useState(new Set()); // Track wishlisted items
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if the user is logged in
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
 
-    // Fetch products from Firestore - open to everyone
     const fetchProducts = async () => {
       try {
         const productsCollection = collection(db, 'products');
@@ -40,17 +40,29 @@ const ProductComponent = () => {
 
     fetchProducts();
 
-    // Fetch cart items when user is logged in
+    // Fetch both cart and wishlist when user is logged in
     if (user) {
-      const fetchCartCount = async () => {
-        const cartCollection = collection(db, 'users', user.uid, 'cart');
-        const cartSnapshot = await getDocs(cartCollection);
-        setCartCount(cartSnapshot.size);
+      const fetchUserData = async () => {
+        try {
+          // Fetch cart count
+          const cartCollection = collection(db, 'users', user.uid, 'cart');
+          const cartSnapshot = await getDocs(cartCollection);
+          setCartCount(cartSnapshot.size);
+
+          // Fetch wishlist items
+          const wishlistCollection = collection(db, 'users', user.uid, 'wishlist');
+          const wishlistSnapshot = await getDocs(wishlistCollection);
+          const wishlistProductIds = new Set(
+            wishlistSnapshot.docs.map(doc => doc.data().productId)
+          );
+          setWishlistItems(wishlistProductIds);
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
       };
-      fetchCartCount();
+      fetchUserData();
     }
 
-    // Cleanup listener on component unmount
     return () => unsubscribeAuth();
   }, [user]);
 
@@ -69,7 +81,16 @@ const ProductComponent = () => {
     }
 
     try {
+      // Check if product already exists in cart
       const cartCollection = collection(db, 'users', user.uid, 'cart');
+      const q = query(cartCollection, where('productId', '==', product.id));
+      const cartSnapshot = await getDocs(q);
+
+      if (!cartSnapshot.empty) {
+        toast.info('Item is already in your cart!');
+        return;
+      }
+
       await addDoc(cartCollection, {
         productId: product.id,
         name: product.name,
@@ -77,11 +98,11 @@ const ProductComponent = () => {
         image: product.image,
         quantity: 1
       });
-      alert('Item added to cart!');
-      setCartCount(prevCount => prevCount + 1); // Update cart count locally
+      toast.success('Item added to cart!');
+      setCartCount(prevCount => prevCount + 1);
     } catch (error) {
       console.error('Error adding to cart:', error);
-      alert('Failed to add item to cart');
+      toast.error('Failed to add item to cart');
     }
   };
 
@@ -93,16 +114,25 @@ const ProductComponent = () => {
 
     try {
       const wishlistCollection = collection(db, 'users', user.uid, 'wishlist');
+      
+      // Check if product is already in wishlist
+      if (wishlistItems.has(product.id)) {
+        toast.info('Item is already in your wishlist!');
+        return;
+      }
+
       await addDoc(wishlistCollection, {
         productId: product.id,
         name: product.name,
         price: product.price,
         image: product.image
       });
-      alert('Item added to wishlist!');
+      
+      setWishlistItems(prev => new Set([...prev, product.id]));
+      toast.success('Item added to wishlist!');
     } catch (error) {
       console.error('Error adding to wishlist:', error);
-      alert('Failed to add item to wishlist');
+      toast.error('Failed to add item to wishlist');
     }
   };
 
@@ -116,7 +146,21 @@ const ProductComponent = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <h2 className="text-2xl font-bold text-center mb-6 text-blue-800">Our Products</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-blue-800">Our Products</h2>
+        {user && (
+          <div className="flex gap-4">
+            <Link to="/wishlist" className="text-blue-600 hover:text-blue-800 flex items-center gap-2">
+              <Heart className="w-5 h-5" />
+              Wishlist ({wishlistItems.size})
+            </Link>
+            <Link to="/cart" className="text-blue-600 hover:text-blue-800 flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5" />
+              Cart ({cartCount})
+            </Link>
+          </div>
+        )}
+      </div>
 
       {products.length === 0 ? (
         <p className="text-center text-gray-600">No products available</p>
@@ -124,20 +168,21 @@ const ProductComponent = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {products.map((product) => (
             <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden transform transition-all hover:scale-102 hover:shadow-lg">
-              {/* Product Image */}
               <div className="relative">
                 <img src={product.image || 'vite.svg'} alt={product.name} className="w-full h-48 object-cover" />
-                <button onClick={() => handleAddToWishlist(product)} className="absolute top-2 right-2 bg-white/80 p-1.5 rounded-full hover:bg-white">
-                  <Heart className="text-red-500 w-4 h-4" />
+                <button 
+                  onClick={() => handleAddToWishlist(product)} 
+                  className={`absolute top-2 right-2 bg-white/80 p-1.5 rounded-full hover:bg-white
+                    ${wishlistItems.has(product.id) ? 'text-red-500' : 'text-gray-400'}`}
+                >
+                  <Heart className="w-4 h-4" fill={wishlistItems.has(product.id) ? "currentColor" : "none"} />
                 </button>
               </div>
 
-              {/* Product Details */}
               <div className="p-3">
                 <h3 className="text-lg font-semibold text-blue-900">{product.name}</h3>
                 <p className="text-sm text-gray-600 mb-2">{product.description}</p>
 
-                {/* Pricing and Rating */}
                 <div className="flex justify-between items-center">
                   <div>
                     <div className="flex items-center">
@@ -151,11 +196,17 @@ const ProductComponent = () => {
                   </div>
 
                   <div className="flex space-x-2">
-                    <button onClick={() => handleAddToCart(product)} className="bg-blue-600 text-white px-3 py-1.5 rounded-full hover:bg-blue-700 transition-colors flex items-center text-sm">
+                    <button 
+                      onClick={() => handleAddToCart(product)} 
+                      className="bg-blue-600 text-white px-3 py-1.5 rounded-full hover:bg-blue-700 transition-colors flex items-center text-sm"
+                    >
                       <ShoppingCart className="mr-1 w-4 h-4" />
                       Add to Cart
                     </button>
-                    <Link to={`/productDetails/${product.id}`} className="bg-blue-600 text-white px-3 py-1.5 rounded-full hover:bg-blue-700 transition-colors flex items-center text-sm">
+                    <Link 
+                      to={`/productDetails/${product.id}`} 
+                      className="bg-blue-600 text-white px-3 py-1.5 rounded-full hover:bg-blue-700 transition-colors flex items-center text-sm"
+                    >
                       View Details
                     </Link>
                   </div>

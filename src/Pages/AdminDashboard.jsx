@@ -11,6 +11,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useNavigate } from 'react-router-dom';
 import { auth, db, storage } from '../../firebase';
 import { Trash2, Edit, PlusCircle, Upload } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
@@ -88,7 +89,7 @@ const AdminDashboard = () => {
     e.preventDefault();
     try {
       if (!documentFile) {
-        alert('Please select a document to upload');
+        toast.info('Please select a document to upload');
         return;
       }
 
@@ -122,10 +123,10 @@ const AdminDashboard = () => {
       });
       setDocumentFile(null);
 
-      alert('Document uploaded successfully');
+      toast.success('Document uploaded successfully');
     } catch (error) {
       console.error('Error uploading document:', error);
-      alert('Failed to upload document');
+      toast.error('Failed to upload document');
     }
   };
 
@@ -155,7 +156,7 @@ const AdminDashboard = () => {
     try {
       await deleteDoc(doc(db, 'r&d-documents', documentId));
       setDocuments(documents.filter(d => d.id !== documentId));
-      alert('Document deleted successfully');
+      toast.success('Document deleted successfully');
     } catch (error) {
       console.error('Error deleting document:', error);
     }
@@ -171,7 +172,7 @@ const AdminDashboard = () => {
       return downloadURL;
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('Failed to upload image');
+      toast.error('Failed to upload image');
       return null;
     }
   };
@@ -180,7 +181,7 @@ const AdminDashboard = () => {
     try {
       await deleteDoc(doc(db, 'products', productId));
       setProducts(products.filter(p => p.id !== productId));
-      alert('Product deleted successfully');
+      toast.success('Product deleted successfully');
     } catch (error) {
       console.error('Error deleting product:', error);
     }
@@ -222,7 +223,7 @@ const AdminDashboard = () => {
       setImagePreview(null);
       
       // Show success message
-      alert('Product added successfully');
+      toast.success('Product added successfully');
       
       // Redirect to home route
       navigate('/');
@@ -254,7 +255,7 @@ const AdminDashboard = () => {
       setEditingProduct(null);
       setImageFile(null);
       setImagePreview(null);
-      alert('Product updated successfully');
+      toast.success('Product updated successfully');
       
       // Redirect to home route
       navigate('/');

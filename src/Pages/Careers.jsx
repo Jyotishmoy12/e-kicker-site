@@ -8,8 +8,7 @@ import {
   CheckCircle, 
   AlertTriangle 
 } from 'lucide-react';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../../firebase';
+
 import emailjs from '@emailjs/browser';
 
 const Careers = () => {
@@ -19,7 +18,7 @@ const Careers = () => {
     phone: '',
     educationLevel: '',
     appliedFor: '',
-    resume: null,
+    resumeLink:'',
     message: ''
   });
 
@@ -52,6 +51,7 @@ const Careers = () => {
           phone: applicationData.phone,
           educationLevel: applicationData.educationLevel,
           appliedFor: applicationData.appliedFor,
+          resumeLink:applicationData.resumeLink,
           message: applicationData.message,
         },
         'eYdPp2gl41DbXPN05' // Replace with your EmailJS Public Key
@@ -66,7 +66,7 @@ const Careers = () => {
         phone: '',
         educationLevel: '',
         appliedFor: '',
-        resume: null,
+        resumeLink:'',
         message: ''
       });
 
@@ -264,7 +264,21 @@ const Careers = () => {
               <option value="research">Research & Development</option>
             </select>
           </div>
-
+            <div>
+              <label htmlFor="resumeLink" className="block text-gray-700 mb-2">
+                Resume Link
+              </label>
+              <input
+                type="text"
+                id="resumeLink"
+                name="resumeLink"
+                value={applicationData.resumeLink}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Your Resume Link"
+              />
+            </div>
           <div>
             <label htmlFor="message" className="block text-gray-700 mb-2">
               Additional Information

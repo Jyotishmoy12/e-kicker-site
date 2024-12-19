@@ -96,7 +96,7 @@ const Contact = () => {
             <Mail className="w-8 h-8 text-blue-600" />
             <div>
               <h3 className="font-semibold text-gray-700">Email</h3>
-              <p className="text-gray-600">support@e-kicker.com</p>
+              <p className="text-gray-600">ekickers24@gmail.com</p>
             </div>
           </div>
           
@@ -104,7 +104,7 @@ const Contact = () => {
             <Phone className="w-8 h-8 text-blue-600" />
             <div>
               <h3 className="font-semibold text-gray-700">Phone</h3>
-              <p className="text-gray-600">+1 (555) 123-4567</p>
+              <p className="text-gray-600"> +919395416435</p>
             </div>
           </div>
           
@@ -112,7 +112,7 @@ const Contact = () => {
             <MapPin className="w-8 h-8 text-blue-600" />
             <div>
               <h3 className="font-semibold text-gray-700">Address</h3>
-              <p className="text-gray-600">123 Tech Innovation Street, Silicon Valley, CA 94000</p>
+              <p className="text-gray-600">Tezpur University, Nilachal Mens Hostel</p>
             </div>
           </div>
 

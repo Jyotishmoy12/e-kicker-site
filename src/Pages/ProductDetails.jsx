@@ -14,7 +14,7 @@ import { db, auth } from '../../firebase';
 import { doc, getDoc, addDoc, collection } from 'firebase/firestore';
 import Navbar from "../components/Navbar"
 import Footer from "../components/Footer"
-
+import { toast } from 'react-toastify';
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -44,7 +44,8 @@ const ProductDetails = () => {
             originalPrice: parseFloat(productSnap.data().originalPrice || 0),
             ratings: parseFloat(productSnap.data().ratings || 0),
             // Ensure images is an array, fallback to empty array
-            images: productSnap.data().images || [productSnap.data().image || 'vite.svg']
+            images: productSnap.data().images || [productSnap.data().image || '/vite.svg']
+            
           };
           setProduct(productData);
         } else {
@@ -92,10 +93,10 @@ const ProductDetails = () => {
         image: product.images[0],
         quantity: quantity
       });
-      alert('Item added to cart!');
+      toast.success('Item added to cart!');
     } catch (error) {
       console.error('Error adding to cart:', error);
-      alert('Failed to add item to cart');
+      toast.error('Failed to add item to cart');
     }
   };
 
@@ -113,10 +114,10 @@ const ProductDetails = () => {
         price: product.price,
         image: product.images[0]
       });
-      alert('Item added to wishlist!');
+      toast.success('Item added to wishlist!');
     } catch (error) {
       console.error('Error adding to wishlist:', error);
-      alert('Failed to add item to wishlist');
+      toast.error('Failed to add item to wishlist');
     }
   };
 
@@ -144,6 +145,10 @@ const ProductDetails = () => {
               src={product.images[currentImageIndex]} 
               alt={`${product.name} - Image ${currentImageIndex + 1}`}
               className="w-full h-[500px] object-cover"
+              onError={(e) => {
+                console.log('Image failed to load:', e.target.src);
+                e.target.src = '/vite.svg';
+              }}
             />
             {/* Image Navigation Buttons */}
             {product.images.length > 1 && (

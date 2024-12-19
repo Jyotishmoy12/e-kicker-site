@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ShoppingCart, Menu, X, Search } from 'lucide-react';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
@@ -6,11 +6,12 @@ import { getFirestore, collection, query, where, getDocs } from 'firebase/firest
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || null); // Use localStorage
+  const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || null);
   const [cartCount, setCartCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchRef = useRef(null);
 
   const location = useLocation();
   const auth = getAuth();
@@ -28,7 +29,7 @@ const Header = () => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUserEmail(user.email);
-        localStorage.setItem('userEmail', user.email); // Save to localStorage
+        localStorage.setItem('userEmail', user.email);
         try {
           const cartCollection = collection(db, 'users', user.uid, 'cart');
           const cartSnapshot = await getDocs(cartCollection);
@@ -38,12 +39,12 @@ const Header = () => {
         }
       } else {
         setUserEmail(null);
-        localStorage.removeItem('userEmail'); // Clear localStorage
+        localStorage.removeItem('userEmail');
         setCartCount(0);
       }
     });
 
-    return () => unsubscribe(); // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, [auth, db]);
 
   const handleSearch = async (term) => {
@@ -52,7 +53,6 @@ const Header = () => {
       return;
     }
 
-    setIsSearching(true);
     try {
       const productsRef = collection(db, 'products');
       const nameQuery = query(
@@ -82,13 +82,12 @@ const Header = () => {
       });
 
       const searchResults = Array.from(results.values()).slice(0, 5);
-
       setSearchResults(searchResults);
+      setShowSearchResults(true);
     } catch (error) {
       console.error('Search error:', error);
       setSearchResults([]);
     }
-    setIsSearching(false);
   };
 
   const handleInputChange = (e) => {
@@ -100,13 +99,17 @@ const Header = () => {
   const clearSearch = () => {
     setSearchTerm('');
     setSearchResults([]);
-    setIsSearching(false);
+    setShowSearchResults(false);
+  };
+
+  const handleResultClick = (productId) => {
+    // Only close if user explicitly chooses to
   };
 
   const navItems = [
     { to: '/', label: 'Home' },
     { to: '/r&d', label: 'Research' },
-    { to: '/bulk', label: 'Bulk' },
+    // { to: '/userprofile', label: 'User Profile' },
     { to: '/account', label: 'Account' },
     ...(userEmail === 'bhargab@gmail.com' ? [{ to: '/admin', label: 'Admin' }] : []),
   ];
@@ -116,7 +119,7 @@ const Header = () => {
       .signOut()
       .then(() => {
         setUserEmail(null);
-        localStorage.removeItem('userEmail'); // Clear localStorage
+        localStorage.removeItem('userEmail');
       })
       .catch((error) => {
         console.error('Logout error: ', error);
@@ -135,16 +138,16 @@ const Header = () => {
           />
         </div>
 
-        {/* Conditionally render search bar on specific routes */}
+        {/* Search Bar */}
         {searchVisibleRoutes.includes(location.pathname) && (
-          <div className="flex-grow max-w-md mx-4 relative">
+          <div className="flex-grow max-w-md mx-4 relative" ref={searchRef}>
             <div className="relative">
               <input
                 type="text"
                 placeholder="Search products..."
                 value={searchTerm}
                 onChange={handleInputChange}
-                onFocus={() => searchResults.length > 0 && setIsSearching(true)}
+                onFocus={() => setShowSearchResults(true)}
                 className="w-full pl-10 pr-10 py-2 border border-blue-300 rounded-full 
                            focus:outline-none focus:ring-2 focus:ring-blue-500 
                            transition-all duration-300 text-sm"
@@ -162,19 +165,24 @@ const Header = () => {
               )}
             </div>
 
-            {isSearching && searchResults.length > 0 && (
-              <div
-                className="absolute z-50 w-full mt-2 bg-white 
-                           border border-blue-200 rounded-lg shadow-xl 
-                           max-h-[300px] overflow-y-auto"
-              >
+            {showSearchResults && searchResults.length > 0 && (
+              <div className="absolute z-50 w-full mt-2 bg-white border border-blue-200 rounded-lg shadow-xl max-h-[300px] overflow-y-auto">
+                <div className="sticky top-0 bg-blue-50 p-2 flex justify-between items-center border-b border-blue-200">
+                  <span className="text-sm font-medium text-blue-800">Search Results</span>
+                  <button 
+                    onClick={() => setShowSearchResults(false)}
+                    className="p-1 hover:bg-blue-100 rounded-full"
+                  >
+                    <X className="w-4 h-4 text-blue-800" />
+                  </button>
+                </div>
                 {searchResults.map((product) => (
                   <Link
                     to={`/productDetails/${product.id}`}
                     key={product.id}
-                    onClick={clearSearch}
+                    onClick={() => handleResultClick(product.id)}
                     className="flex items-center p-3 hover:bg-blue-50 
-                               transition-colors duration-200 border-b last:border-b-0"
+                             transition-colors duration-200 border-b last:border-b-0"
                   >
                     <img
                       src={product.image || 'default-image.png'}
@@ -192,8 +200,7 @@ const Header = () => {
           </div>
         )}
 
-        {/* Navigation */}
-        {/* ... Rest of your component */}
+        {/* Mobile Menu Button */}
         <div className="md:hidden">
           <button 
             onClick={toggleMenu} 
@@ -237,7 +244,6 @@ const Header = () => {
                 )}
               </Link>
             </li>
-            {/* Conditionally render logout button only for regular users */}
             {userEmail && userEmail !== 'bhargab@gmail.com' && location.pathname === '/' && (
               <li>
                 <button 

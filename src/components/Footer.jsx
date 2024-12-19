@@ -21,8 +21,7 @@ const Footer = () => {
               E-KICKER
             </h3>
             <p className="text-blue-100 text-sm mb-4">
-              Innovative solutions for your business needs. 
-              Transforming challenges into opportunities.
+            Come join us and become part of our E-Kicker family!
             </p>
             <div className="flex space-x-4">
               <a 
@@ -56,7 +55,8 @@ const Footer = () => {
           <div>
       <h4 className="text-xl font-semibold text-yellow-400 mb-4">Quick Links</h4>
       <ul className="space-y-2">
-        {['Home', 'About Us', 'Careers', 'Services', 'Contact'].map((link) => (
+        {/*'Seller products' section will implement it later*/}
+        {['About Us', 'Careers', 'Services', 'Contact'].map((link) => (
           <li key={link}>
             <Link 
               to={`/${link.toLowerCase().replace(' ', '-')}`} 
@@ -102,19 +102,19 @@ const Footer = () => {
               <div className="flex items-center">
                 <Mail className="w-5 h-5 mr-3 text-yellow-300" />
                 <span className="text-blue-200 text-sm">
-                  support@ourcompany.com
+                ekickers24@gmail.com
                 </span>
               </div>
               <div className="flex items-center">
                 <Phone className="w-5 h-5 mr-3 text-yellow-300" />
                 <span className="text-blue-200 text-sm">
-                  +1 (555) 123-4567
+                  +919395416435
                 </span>
               </div>
               <div className="flex items-center">
                 <MapPin className="w-5 h-5 mr-3 text-yellow-300" />
                 <span className="text-blue-200 text-sm">
-                  123 Tech Lane, Innovation City
+                  Tezpur University, Nilachal Mens Hostel
                 </span>
               </div>
             </div>
