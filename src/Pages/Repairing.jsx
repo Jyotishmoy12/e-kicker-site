@@ -13,12 +13,10 @@ import {
   Power,
   Plug
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const RepairPage = () => {
-  const handleServiceRedirect = () => {
-    // Replace with your actual service page route
-    window.location.href = '/contact';
-  };
+ 
 
   const services = [
     {
@@ -82,10 +80,9 @@ const RepairPage = () => {
             </p>
             <div className="flex gap-4">
               <button 
-                onClick={handleServiceRedirect}
                 className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center"
               >
-                View Our Services
+                <Link to="/services">View Our Services</Link>
                 <ArrowRight className="ml-2 h-5 w-5" />
               </button>
             </div>
@@ -102,7 +99,6 @@ const RepairPage = () => {
               <div 
                 key={index} 
                 className="p-6 rounded-xl bg-gray-50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={handleServiceRedirect}
               >
                 <div className="mb-4">{service.icon}</div>
                 <h3 className="text-xl font-semibold mb-3">{service.title}</h3>
@@ -148,11 +144,13 @@ const RepairPage = () => {
             <p className="text-xl mb-8">
               Visit our services page to explore our complete range of electrical services and repairs
             </p>
-            <button 
-              onClick={handleServiceRedirect}
+            <button          
               className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center mx-auto"
             >
-             Want to know more? Contact Us
+                <Link to="/contact">
+                Want to know more? Contact Us
+                </Link>
+             
               <ArrowRight className="ml-2 h-5 w-5" />
             </button>
           </div>
