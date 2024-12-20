@@ -145,17 +145,17 @@ const ProductComponent = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-blue-800">Our Products</h2>
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-blue-800">Our Products</h2>
         {user && (
-          <div className="flex gap-4">
-            <Link to="/wishlist" className="text-blue-600 hover:text-blue-800 flex items-center gap-2">
-              <Heart className="w-5 h-5" />
+          <div className="flex gap-3 sm:gap-4 text-sm sm:text-base">
+            <Link to="/wishlist" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 sm:gap-2">
+              <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
               Wishlist ({wishlistItems.size})
             </Link>
-            <Link to="/cart" className="text-blue-600 hover:text-blue-800 flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5" />
+            <Link to="/cart" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 sm:gap-2">
+              <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
               Cart ({cartCount})
             </Link>
           </div>
@@ -165,49 +165,65 @@ const ProductComponent = () => {
       {products.length === 0 ? (
         <p className="text-center text-gray-600">No products available</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
           {products.map((product) => (
             <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden transform transition-all hover:scale-102 hover:shadow-lg">
               <div className="relative">
-                <img src={product.image || 'vite.svg'} alt={product.name} className="w-full h-48 object-cover" />
+                <img 
+                  src={product.image || 'vite.svg'} 
+                  alt={product.name} 
+                  className="w-full h-32 sm:h-40 md:h-48 object-cover"
+                />
                 <button 
                   onClick={() => handleAddToWishlist(product)} 
-                  className={`absolute top-2 right-2 bg-white/80 p-1.5 rounded-full hover:bg-white
+                  className={`absolute top-1 sm:top-2 right-1 sm:right-2 bg-white/80 p-1 sm:p-1.5 rounded-full hover:bg-white
                     ${wishlistItems.has(product.id) ? 'text-red-500' : 'text-gray-400'}`}
                 >
-                  <Heart className="w-4 h-4" fill={wishlistItems.has(product.id) ? "currentColor" : "none"} />
+                  <Heart className="w-3 h-3 sm:w-4 sm:h-4" fill={wishlistItems.has(product.id) ? "currentColor" : "none"} />
                 </button>
               </div>
 
-              <div className="p-3">
-                <h3 className="text-lg font-semibold text-blue-900">{product.name}</h3>
-                <p className="text-sm text-gray-600 mb-2">{product.description}</p>
+              <div className="p-2 sm:p-3">
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold text-blue-900 truncate">
+                  {product.name}
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2 line-clamp-2">
+                  {product.description}
+                </p>
 
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                   <div>
                     <div className="flex items-center">
-                      <span className="text-xl font-bold text-blue-800 mr-2">₹{product.price.toFixed(2)}</span>
-                      <span className="text-sm line-through text-gray-500">₹{product.originalPrice.toFixed(2)}</span>
+                      <span className="text-sm sm:text-base md:text-lg font-bold text-blue-800 mr-1 sm:mr-2">
+                        ₹{product.price.toFixed(2)}
+                      </span>
+                      <span className="text-xs sm:text-sm line-through text-gray-500">
+                        ₹{product.originalPrice.toFixed(2)}
+                      </span>
                     </div>
-                    <div className="flex items-center mt-1">
-                      {renderStars(product.ratings)}
-                      <span className="ml-1 text-xs text-gray-600">({product.ratings.toFixed(1)})</span>
+                    <div className="flex items-center mt-0.5 sm:mt-1">
+                      <div className="flex text-xs sm:text-sm">
+                        {renderStars(product.ratings)}
+                      </div>
+                      <span className="ml-1 text-xs text-gray-600">
+                        ({product.ratings.toFixed(1)})
+                      </span>
                     </div>
                   </div>
 
-                  <div className="flex space-x-2">
+                  <div className="flex w-full sm:w-auto gap-1 sm:gap-2 text-xs">
                     <button 
                       onClick={() => handleAddToCart(product)} 
-                      className="bg-blue-600 text-white px-3 py-1.5 rounded-full hover:bg-blue-700 transition-colors flex items-center text-sm"
+                      className="flex-1 sm:flex-none bg-blue-600 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full hover:bg-blue-700 transition-colors flex items-center justify-center"
                     >
-                      <ShoppingCart className="mr-1 w-4 h-4" />
-                      Add to Cart
+                      <ShoppingCart className="mr-1 w-3 h-3 sm:w-4 sm:h-4" />
+                      Add
                     </button>
                     <Link 
                       to={`/productDetails/${product.id}`} 
-                      className="bg-blue-600 text-white px-3 py-1.5 rounded-full hover:bg-blue-700 transition-colors flex items-center text-sm"
+                      className="flex-1 sm:flex-none bg-blue-600 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full hover:bg-blue-700 transition-colors flex items-center justify-center"
                     >
-                      View Details
+                      View
                     </Link>
                   </div>
                 </div>

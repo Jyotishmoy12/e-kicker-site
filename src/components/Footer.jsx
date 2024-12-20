@@ -6,7 +6,8 @@ import {
   Linkedin, 
   Mail, 
   Phone, 
-  MapPin 
+  MapPin ,
+  Code
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import TermsOfUse from '../Pages/TermsOfUse';
@@ -132,25 +133,37 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-8 pt-6 border-t border-blue-700 
-                        flex flex-col md:flex-row 
-                        justify-between items-center">
-          <p className="text-sm text-blue-200 mb-2 md:mb-0">
-            © 2024 E-Kicker. All Rights Reserved.
-          </p>
-          <div className="flex space-x-4">
+        <div className="mt-8 pt-6 border-t border-blue-700 flex flex-col md:flex-row justify-between items-center">
+          <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
+            <p className="text-sm text-blue-200">
+              © 2024 E-Kicker. All Rights Reserved.
+            </p>
+            <div className="flex items-center text-blue-200 text-sm">
+              <Code className="w-4 h-4 mr-1 text-yellow-300" />
+              <span>Developed by</span>
+              <a 
+                href="https://www.linkedin.com/in/jyotishmoy-deka-6871b9229/"
+                className="ml-1 text-yellow-300 hover:text-yellow-400 transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Jyotishmoy
+              </a>
+            </div>
+          </div>
+          <div className="flex space-x-4 mt-2 md:mt-0">
             <Link
               to="/privacypolicy"
-              className="text-blue-200 hover:text-yellow-300 
-                         transition-colors text-sm"
+              className="text-blue-200 hover:text-yellow-300 transition-colors text-sm"
             >
               Privacy Policy
             </Link>
-            <Link className="text-blue-200 hover:text-yellow-300 
-                         transition-colors text-sm" to ="/termsofuse"> 
-              
+            <Link 
+              to="/termsofuse"
+              className="text-blue-200 hover:text-yellow-300 transition-colors text-sm"
+            > 
               Terms of Service
-              </Link>
+            </Link>
           </div>
         </div>
       </div>
