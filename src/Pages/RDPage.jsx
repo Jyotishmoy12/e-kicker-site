@@ -3,6 +3,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { FileText, Filter, Search, Download, X } from 'lucide-react';
 import { format } from 'date-fns';
+import Navbar from "../components/Navbar"
 
 const RDPage = () => {
   const [documents, setDocuments] = useState([]);
@@ -70,6 +71,8 @@ const RDPage = () => {
   };
 
   return (
+    <>
+    <Navbar/>
     <div className="container mx-auto px-4 py-6">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-blue-900 mb-4">
@@ -197,6 +200,7 @@ const RDPage = () => {
         Showing {filteredDocuments.length} of {documents.length} documents
       </div>
     </div>
+    </>
   );
 };
 

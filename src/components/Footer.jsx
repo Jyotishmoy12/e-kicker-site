@@ -9,6 +9,8 @@ import {
   MapPin 
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import TermsOfUse from '../Pages/TermsOfUse';
+
 
 const Footer = () => {
   return (
@@ -129,20 +131,18 @@ const Footer = () => {
             © 2024 E-Kicker. All Rights Reserved.
           </p>
           <div className="flex space-x-4">
-            <a 
-              href="#" 
+            <Link
+              to="/privacypolicy"
               className="text-blue-200 hover:text-yellow-300 
                          transition-colors text-sm"
             >
               Privacy Policy
-            </a>
-            <a 
-              href="#" 
-              className="text-blue-200 hover:text-yellow-300 
-                         transition-colors text-sm"
-            >
+            </Link>
+            <Link className="text-blue-200 hover:text-yellow-300 
+                         transition-colors text-sm" to ="/termsofuse"> 
+              
               Terms of Service
-            </a>
+              </Link>
           </div>
         </div>
       </div>

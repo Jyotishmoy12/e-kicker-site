@@ -10,7 +10,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useNavigate } from 'react-router-dom';
 import { auth, db, storage } from '../../firebase';
-import { Trash2, Edit, PlusCircle, Upload } from 'lucide-react';
+import { Trash2, Edit, PlusCircle, Upload, FileText } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 const AdminDashboard = () => {
@@ -27,14 +27,20 @@ const AdminDashboard = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const navigate = useNavigate();
+  
+  // Document states
   const [documents, setDocuments] = useState([]);
   const [newDocument, setNewDocument] = useState({
     title: '',
     description: '',
     category: '',
-    fileUrl: '',
   });
   const [documentFile, setDocumentFile] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Cloudinary configuration
+  const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+  const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 
   // Utility function to safely convert to number
   const safeParseFloat = (value, defaultValue = 0) => {
@@ -67,7 +73,7 @@ const AdminDashboard = () => {
           }));
           setProducts(productList);
 
-          // Load Documents
+          // Load Documents from Firestore if needed
           const documentsCollection = collection(db, 'r&d-documents');
           const documentSnapshot = await getDocs(documentsCollection);
           const documentList = documentSnapshot.docs.map(doc => ({
@@ -84,98 +90,37 @@ const AdminDashboard = () => {
     loadData();
   }, [navigate]);
 
-
-  const handleDocumentUpload = async (e) => {
-    e.preventDefault();
+ 
+  const uploadImageToCloudinary = async (file) => {
+    if (!file) return null;
+    
     try {
-      if (!documentFile) {
-        toast.info('Please select a document to upload');
-        return;
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Upload failed');
       }
-
-      const storageRef = ref(storage, `r&d-documents/${Date.now()}_${documentFile.name}`);
-      const snapshot = await uploadBytes(storageRef, documentFile);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-
-      const docRef = await addDoc(collection(db, 'r&d-documents'), {
-        ...newDocument,
-        fileUrl: downloadURL,
-        fileName: documentFile.name,
-        uploadedAt: new Date().toISOString(),
-        uploadedBy: auth.currentUser.email
-      });
-
-      setDocuments([...documents, { 
-        id: docRef.id, 
-        ...newDocument,
-        fileUrl: downloadURL,
-        fileName: documentFile.name,
-        uploadedAt: new Date().toISOString(),
-        uploadedBy: auth.currentUser.email
-      }]);
-
-      // Reset form
-      setNewDocument({
-        title: '',
-        description: '',
-        category: '',
-        fileUrl: '',
-      });
-      setDocumentFile(null);
-
-      toast.success('Document uploaded successfully');
+  
+      const data = await response.json();
+      return data.secure_url;
     } catch (error) {
-      console.error('Error uploading document:', error);
-      toast.error('Failed to upload document');
-    }
-  };
-
-  // Handle image file selection
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      // Create image preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-
-  const handleDocumentFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setDocumentFile(file);
-    }
-  };
-
-  const handleDeleteDocument = async (documentId) => {
-    try {
-      await deleteDoc(doc(db, 'r&d-documents', documentId));
-      setDocuments(documents.filter(d => d.id !== documentId));
-      toast.success('Document deleted successfully');
-    } catch (error) {
-      console.error('Error deleting document:', error);
-    }
-  };
-
-  // Upload image to Firebase Storage
-  const uploadImage = async () => {
-    if (!imageFile) return null;
-    try {
-      const storageRef = ref(storage, `product-images/${Date.now()}_${imageFile.name}`);
-      const snapshot = await uploadBytes(storageRef, imageFile);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      return downloadURL;
-    } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('Error uploading to Cloudinary:', error);
       toast.error('Failed to upload image');
       return null;
     }
   };
+  
 
   const handleDeleteProduct = async (productId) => {
     try {
@@ -189,18 +134,20 @@ const AdminDashboard = () => {
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    
     try {
-      // Upload image if present
-      const imageUrl = await uploadImage();
-
+      // Upload image to Cloudinary instead of Firebase
+      const imageUrl = imageFile ? await uploadImageToCloudinary(imageFile) : null;
+  
       const docRef = await addDoc(collection(db, 'products'), {
         ...newProduct,
-        image: imageUrl || 'vite.svg', // fallback to default image
+        image: imageUrl || 'vite.svg',
         price: safeParseFloat(newProduct.price),
         originalPrice: safeParseFloat(newProduct.originalPrice),
         ratings: safeParseFloat(newProduct.ratings)
       });
-
+  
       setProducts([...products, { 
         id: docRef.id, 
         ...newProduct,
@@ -222,22 +169,27 @@ const AdminDashboard = () => {
       setImageFile(null);
       setImagePreview(null);
       
-      // Show success message
       toast.success('Product added successfully');
-      
-      // Redirect to home route
       navigate('/');
     } catch (error) {
       console.error('Error adding product:', error);
+      toast.error('Failed to add product');
+    } finally {
+      setIsLoading(false);
     }
   };
+  
 
   const handleUpdateProduct = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    
     try {
-      // Upload image if a new image is selected
-      const imageUrl = imageFile ? await uploadImage() : editingProduct.image;
-
+      // Upload new image to Cloudinary if provided
+      const imageUrl = imageFile 
+        ? await uploadImageToCloudinary(imageFile) 
+        : editingProduct.image;
+  
       const productRef = doc(db, 'products', editingProduct.id);
       const updatedProduct = {
         ...editingProduct,
@@ -246,9 +198,9 @@ const AdminDashboard = () => {
         originalPrice: safeParseFloat(editingProduct.originalPrice),
         ratings: safeParseFloat(editingProduct.ratings)
       };
-
+  
       await updateDoc(productRef, updatedProduct);
-
+  
       setProducts(products.map(p => 
         p.id === editingProduct.id ? updatedProduct : p
       ));
@@ -257,15 +209,132 @@ const AdminDashboard = () => {
       setImagePreview(null);
       toast.success('Product updated successfully');
       
-      // Redirect to home route
       navigate('/');
     } catch (error) {
       console.error('Error updating product:', error);
+      toast.error('Failed to update product');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+
+  // Cloudinary document upload function
+  const handleDocumentUpload = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+  
+    try {
+      if (!documentFile) {
+        toast.error('Please select a PDF file');
+        return;
+      }
+  
+      // Validate file type
+      if (!documentFile.type.includes('pdf')) {
+        toast.error('Please upload a PDF file');
+        return;
+      }
+  
+      const formData = new FormData();
+      formData.append('file', documentFile);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      formData.append('resource_type', 'raw');
+  
+      // Add flag for PDF handling directly in upload
+      formData.append('flags', 'attachment');
+  
+      // Upload to Cloudinary
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Upload failed');
+      }
+  
+      const data = await response.json();
+  
+      // Use the secure_url directly without modification
+      const pdfUrl = data.secure_url;
+  
+      // Add to Firestore
+      const docRef = await addDoc(collection(db, 'r&d-documents'), {
+        ...newDocument,
+        fileUrl: pdfUrl,
+        fileName: documentFile.name,
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: auth.currentUser.email,
+        mimeType: documentFile.type,
+        fileSize: documentFile.size
+      });
+  
+      // Update local state
+      setDocuments(prev => [...prev, {
+        id: docRef.id,
+        ...newDocument,
+        fileUrl: pdfUrl,
+        fileName: documentFile.name,
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: auth.currentUser.email,
+        mimeType: documentFile.type,
+        fileSize: documentFile.size
+      }]);
+  
+      // Reset form
+      setNewDocument({
+        title: '',
+        description: '',
+        category: ''
+      });
+      setDocumentFile(null);
+  
+      // Reset file input
+      const fileInput = document.querySelector('input[type="file"]');
+      if (fileInput) {
+        fileInput.value = '';
+      }
+  
+      toast.success('Document uploaded successfully');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error(`Failed to upload document: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const handleDeleteDocument = async (documentId) => {
+    try {
+      // Delete from Firestore
+      await deleteDoc(doc(db, 'r&d-documents', documentId));
+      
+      // Update local state
+      setDocuments(documents.filter(doc => doc.id !== documentId));
+      toast.success('Document deleted successfully');
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast.error('Failed to delete document');
+    }
+  };
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      // Create image preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-  
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
@@ -354,33 +423,31 @@ const AdminDashboard = () => {
             step="0.1"
             max="5"
           />
-          
-          {/* Image Upload Input */}
           <div className="col-span-2 flex items-center space-x-4">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
-              id="imageUpload"
-            />
-            {/* <label 
-              htmlFor="imageUpload" 
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center cursor-pointer"
-            >
-              <Upload className="mr-2" /> 
-              {imagePreview || (editingProduct && editingProduct.image) 
-                ? 'Change Image' 
-                : 'Upload Image'}
-            </label> */}
-            {(imagePreview || (editingProduct && editingProduct.image)) && (
-              <img 
-                src={imagePreview || (editingProduct && editingProduct.image)} 
-                alt="Product Preview" 
-                className="w-20 h-20 object-cover rounded"
-              />
-            )}
-          </div>
+  <div className="flex-1">
+    <input
+      type="file"
+      accept="image/*"
+      onChange={handleImageChange}
+      className="border p-2 rounded w-full"
+      id="imageUpload"
+    />
+    <p className="text-sm text-gray-500 mt-1">
+      Supported formats: JPG, PNG, GIF (max 5MB)
+    </p>
+  </div>
+  {(imagePreview || (editingProduct && editingProduct.image)) && (
+    <div className="w-24">
+      <img 
+        src={imagePreview || (editingProduct && editingProduct.image)} 
+        alt="Product Preview" 
+        className="w-24 h-24 object-cover rounded border"
+      />
+    </div>
+  )}
+</div>
+
+
         </div>
         <div className="mt-4 flex space-x-4">
           <button
@@ -407,7 +474,7 @@ const AdminDashboard = () => {
       </form>
 
       {/* Product List */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {products.map((product) => (
           <div 
             key={product.id} 
@@ -459,12 +526,12 @@ const AdminDashboard = () => {
       </div>
 
       <div className="mt-8">
-        <h2 className="text-2xl font-semibold mb-4">R&D Document Upload</h2>
+        <h2 className="text-2xl font-semibold mb-4">Document Upload</h2>
         <form 
           onSubmit={handleDocumentUpload}
           className="bg-white p-6 rounded-lg shadow-md mb-6"
         >
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <input
               type="text"
               placeholder="Document Title"
@@ -489,26 +556,31 @@ const AdminDashboard = () => {
               className="border p-2 rounded"
               required
             />
-            <div className="col-span-2 flex items-center space-x-4">
+            <div className="flex flex-col gap-2">
               <input
                 type="file"
-                onChange={handleDocumentFileChange}
-                className="border p-2 rounded w-full"
+                accept="application/pdf"
+                onChange={(e) => setDocumentFile(e.target.files[0])}
+                className="border p-2 rounded"
                 required
               />
+              <p className="text-sm text-gray-500">Only PDF files are supported</p>
             </div>
           </div>
           <div className="mt-4">
             <button
               type="submit"
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+              disabled={isLoading}
+              className={`bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center ${
+                isLoading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              <Upload className="mr-2" /> Upload Document
+              <Upload className="mr-2" /> 
+              {isLoading ? 'Uploading...' : 'Upload Document'}
             </button>
           </div>
         </form>
 
-        {/* Document List */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {documents.map((doc) => (
             <div 
@@ -521,7 +593,7 @@ const AdminDashboard = () => {
                   onClick={() => handleDeleteDocument(doc.id)}
                   className="text-red-600 hover:text-red-800"
                 >
-                  <Trash2 />
+                  <Trash2 size={18} />
                 </button>
               </div>
               <p className="text-gray-600 mb-2">{doc.description}</p>
@@ -535,7 +607,8 @@ const AdminDashboard = () => {
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:text-blue-800 flex items-center"
                 >
-                  <FileText className="mr-1" /> Download
+                  <FileText className="mr-1" size={18} />
+                  View PDF
                 </a>
               </div>
             </div>
@@ -543,6 +616,8 @@ const AdminDashboard = () => {
         </div>
       </div>
     </div>
+   
+   
   );
 };
 

@@ -13,13 +13,14 @@ import AdminDashboard from './Pages/AdminDashboard'
 import PrivateRoute from './Pages/PrivateRoute'
 import CartPage from './Pages/CartPage'
 import RDPage from './Pages/RDPage'
-import CheckOutPage from './Pages/CheckOutPage.jsx'
-import OrderConfirmationPage from './Pages/OrderConfirmationPage.jsx'
-import SellerForm from './Pages/Seller.jsx'
-import SellerProducts from './Pages/SellerProducts.jsx'
-import WishlistPage from './Pages/WishlistPage.jsx';
-import UserProfile from './Pages/UserProfile.jsx';
-
+import CheckOutPage from './Pages/CheckOutPage'
+import OrderConfirmationPage from './Pages/OrderConfirmationPage'
+import SellerForm from './Pages/Seller'
+import SellerProducts from './Pages/SellerProducts'
+import WishlistPage from './Pages/WishlistPage';
+import UserProfile from './Pages/UserProfile';
+import TermsOfUse from './Pages/TermsOfUse';
+import PrivacyPolicy from './Pages/PrivacyPolicy';
 
 const App = () => {
   return (
@@ -52,6 +53,8 @@ const App = () => {
             <Route path="/seller-products" element={<SellerProducts/>} />
             <Route path ="/wishlist" element={<WishlistPage/>}/>
             <Route path="/userprofile" element={<UserProfile/>}/>
+            <Route path="/termsofuse" element={<TermsOfUse/>}/>
+            <Route path="/privacypolicy" element={<PrivacyPolicy/>}/>
             {/* <Route path="/edit-product/:id" component={EditProduct} /> */}
             <Route path="/admin" element={
           <PrivateRoute adminOnly={true}>
