@@ -150,7 +150,7 @@ const RDPage = () => {
       {filteredDocuments.length === 0 ? (
         <div className="text-center text-gray-600 mt-10">
           <FileText className="mx-auto mb-4 text-gray-400" size={48} />
-          <p>No documents found matching your search or filter criteria.</p>
+          <p>Oops! No documents match your search or filter criteria. Create an account now to unlock and access the documents you need!</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
