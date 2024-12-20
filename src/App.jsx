@@ -21,6 +21,8 @@ import WishlistPage from './Pages/WishlistPage';
 import UserProfile from './Pages/UserProfile';
 import TermsOfUse from './Pages/TermsOfUse';
 import PrivacyPolicy from './Pages/PrivacyPolicy';
+import Repairing from './Pages/Repairing';
+import ProjectPrototyping from './Pages/ProjectPrototyping';
 
 const App = () => {
   return (
@@ -55,6 +57,8 @@ const App = () => {
             <Route path="/userprofile" element={<UserProfile/>}/>
             <Route path="/termsofuse" element={<TermsOfUse/>}/>
             <Route path="/privacypolicy" element={<PrivacyPolicy/>}/>
+            <Route path="/repairing" element={<Repairing/>}/>
+            <Route path ="/project-prototyping" element={<ProjectPrototyping/>}/>
             {/* <Route path="/edit-product/:id" component={EditProduct} /> */}
             <Route path="/admin" element={
           <PrivateRoute adminOnly={true}>

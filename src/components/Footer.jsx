@@ -76,23 +76,31 @@ const Footer = () => {
               Our Services
             </h4>
             <ul className="space-y-2">
-              {[
-                'Repairing', 
-                'House Wiring', 
-                'Project Prototyping', 
-                'R&D Project', 
-              ].map((service) => (
-                <li key={service}>
-                  <a 
-                    href="#" 
-                    className="text-blue-200 hover:text-yellow-300 
-                               transition-colors text-sm"
-                  >
-                    {service}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <li>
+              <Link 
+                to="/repairing" 
+                className="text-blue-200 hover:text-yellow-300 transition-colors text-sm"
+              >
+                Repairing
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/project-prototyping" 
+                className="text-blue-200 hover:text-yellow-300 transition-colors text-sm"
+              >
+                Project Prototyping
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/r&d" 
+                className="text-blue-200 hover:text-yellow-300 transition-colors text-sm"
+              >
+                R&D Project
+              </Link>
+            </li>
+          </ul>
           </div>
 
           {/* Contact Info */}
