@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ShoppingCart, 
@@ -23,6 +23,9 @@ const ProductDetails = () => {
   const [quantity, setQuantity] = useState(1);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
+  const imageRef = useRef(null);
 
   useEffect(() => {
     // Check user authentication
@@ -65,6 +68,17 @@ const ProductDetails = () => {
     // Cleanup subscription
     return () => unsubscribe();
   }, [id, navigate]);
+
+  const handleMouseMove = (e) => {
+    if (!imageRef.current) return;
+
+    const { left, top, width, height } = imageRef.current.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+
+    setZoomPosition({ x, y });
+  };
+
 
   const handleImageChange = (direction) => {
     if (direction === 'next') {
@@ -140,18 +154,31 @@ const ProductDetails = () => {
       <div className="grid md:grid-cols-2 gap-8">
         {/* Image Gallery Section */}
         <div className="relative">
+        <div 
+            className="relative overflow-hidden rounded-lg shadow-lg cursor-zoom-in"
+            onMouseEnter={() => setIsZoomed(true)}
+            onMouseLeave={() => setIsZoomed(false)}
+            onMouseMove={handleMouseMove}
+            ref={imageRef}
+            style={{ height: '500px' }}
+          >
           <div className="relative overflow-hidden rounded-lg shadow-lg">
             <img 
               src={product.images[currentImageIndex]} 
               alt={`${product.name} - Image ${currentImageIndex + 1}`}
               className="w-full h-[500px] object-cover"
+              style={{
+                transform: isZoomed ? 'scale(2)' : 'scale(1)',
+                transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                transition: isZoomed ? 'none' : 'transform 0.3s ease'
+              }}
               onError={(e) => {
                 console.log('Image failed to load:', e.target.src);
                 e.target.src = '/vite.svg';
               }}
             />
             {/* Image Navigation Buttons */}
-            {product.images.length > 1 && (
+            {!isZoomed && product.images.length > 1 && (
               <>
                 <button 
                   onClick={() => handleImageChange('prev')}
@@ -170,19 +197,20 @@ const ProductDetails = () => {
           </div>
           {/* Thumbnail Preview */}
           {product.images.length > 1 && (
-            <div className="flex justify-center space-x-2 mt-4">
+            <div className="flex justify-center space-x-2 mt-4 overflow-x-auto">
               {product.images.map((img, index) => (
                 <img 
                   key={index}
                   src={img}
                   alt={`Thumbnail ${index + 1}`}
-                  className={`w-16 h-16 object-cover rounded cursor-pointer 
-                    ${currentImageIndex === index ? 'border-2 border-blue-500' : 'opacity-50'}`}
+                  className={`w-16 h-16 object-cover rounded cursor-pointer transition-all
+                    ${currentImageIndex === index ? 'border-2 border-blue-500' : 'opacity-50 hover:opacity-75'}`}
                   onClick={() => setCurrentImageIndex(index)}
                 />
               ))}
             </div>
           )}
+        </div>
         </div>
 
         {/* Product Information Section */}
@@ -249,6 +277,7 @@ const ProductDetails = () => {
               </button>
             </div>
           </div>
+          
 
           {/* Action Buttons */}
           <div className="mt-6 flex space-x-4">
@@ -303,6 +332,7 @@ const ProductDetails = () => {
         )}
       </div>
     </div>
+    
     <Footer/>
     </>
   );
