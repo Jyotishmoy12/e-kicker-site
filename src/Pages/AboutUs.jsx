@@ -4,7 +4,6 @@ import { CircuitBoard, Wrench, Lightbulb, Users } from 'lucide-react';
 const AboutUs = () => {
   return (
     <div className="bg-white min-h-screen">
-      {/* Hero Section */}
       <div className="bg-blue-600 text-white py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">About E-KICKER</h1>
