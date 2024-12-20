@@ -79,7 +79,7 @@ const RDPage = () => {
           Research & Development Repository
         </h1>
         <p className="text-gray-600">
-          Explore and download the latest research documents and technical resources.
+        Access in-depth analyses of our ongoing electronics engineering projects and pioneering research. Download detailed reports and technical documentation to understand the innovation driving our solutions.
         </p>
       </div>
 

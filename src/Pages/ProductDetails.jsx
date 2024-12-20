@@ -218,7 +218,7 @@ const ProductDetails = () => {
           <div className="mt-6 space-y-4">
             <div className="flex items-center">
               <Check className="mr-2 text-green-500" />
-              <span>In Stock: {product.inStock ? 'Available' : 'Out of Stock'}</span>
+              <span>Available</span>
             </div>
             <div className="flex items-center">
               <Truck className="mr-2 text-blue-500" />

@@ -39,7 +39,7 @@ const Footer = () => {
                 <Twitter className="w-6 h-6" />
               </a>
               <a 
-                href="#" 
+                href="https://www.instagram.com/e_kicker_/" 
                 className="text-yellow-300 hover:text-yellow-400 transition-colors"
               >
                 <Instagram className="w-6 h-6" />
