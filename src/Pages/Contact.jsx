@@ -37,8 +37,8 @@ const Contact = () => {
       try {
         // Add application to Firestore
         const emailResponse = await emailjs.send(
-          'service_795rm1q', // Replace with your EmailJS Service ID
-          'template_9c7q4q7', // Replace with your EmailJS Template ID
+          'service_bkiv5kw', // Replace with your EmailJS Service ID
+          'template_3p4l7dr', // Replace with your EmailJS Template ID
           {
             fullName: applicationData.fullName,
             email: applicationData.email,
@@ -46,7 +46,7 @@ const Contact = () => {
             subject: applicationData.subject,
             message: applicationData.message,
           },
-          'eYdPp2gl41DbXPN05' // Replace with your EmailJS Public Key
+          'DTWnwOQdkRUcJa4EA' // Replace with your EmailJS Public Key
         );
     
         console.log('Email sent successfully:', emailResponse);
