@@ -5,11 +5,11 @@ import { Wrench, Lightbulb, Beaker } from 'lucide-react';
 
 const ImageCarousel = () => {
   const images = [
-    "vite.svg",
-    "vite.svg",
-    "vite.svg",
-    "vite.svg",
-    "vite.svg"
+    "arduino.jpg",
+    "arduino.jpg",
+    "arduino.jpg",
+    "arduino.jpg",
+    "arduino.jpg"
   ];
 
   const services = [
