@@ -8,7 +8,8 @@ import {
   Truck, 
   Shield, 
   ChevronLeft, 
-  ChevronRight 
+  ChevronRight,
+  XCircle
 } from 'lucide-react';
 import { db, auth } from '../../firebase';
 import { doc, getDoc, addDoc, collection } from 'firebase/firestore';
@@ -47,6 +48,7 @@ const ProductDetails = () => {
             originalPrice: parseFloat(productSnap.data().originalPrice || 0),
             ratings: parseFloat(productSnap.data().ratings || 0),
             // Ensure images is an array, fallback to empty array
+            inStock: productSnap.data().inStock ?? true,
             images: productSnap.data().images || [productSnap.data().image || '/vite.svg']
             
           };
@@ -97,7 +99,10 @@ const ProductDetails = () => {
       navigate('/account');
       return;
     }
-
+    if (!product.inStock) {
+      toast.error('This product is currently out of stock');
+      return;
+    }
     try {
       const cartCollection = collection(db, 'users', user.uid, 'cart');
       await addDoc(cartCollection, {
@@ -154,7 +159,7 @@ const ProductDetails = () => {
       <div className="grid md:grid-cols-2 gap-8">
         {/* Image Gallery Section */}
         <div className="relative">
-        <div 
+          <div 
             className="relative overflow-hidden rounded-lg shadow-lg cursor-zoom-in"
             onMouseEnter={() => setIsZoomed(true)}
             onMouseLeave={() => setIsZoomed(false)}
@@ -162,7 +167,13 @@ const ProductDetails = () => {
             ref={imageRef}
             style={{ height: '500px' }}
           >
-          <div className="relative overflow-hidden rounded-lg shadow-lg">
+            {/* Stock Status Badge */}
+            <div className={`absolute top-4 left-4 z-10 px-3 py-1 rounded-full text-white ${
+              product.inStock ? 'bg-green-500' : 'bg-red-500'
+            }`}>
+              {product.inStock ? 'In Stock' : 'Out of Stock'}
+            </div>
+
             <img 
               src={product.images[currentImageIndex]} 
               alt={`${product.name} - Image ${currentImageIndex + 1}`}
@@ -177,7 +188,6 @@ const ProductDetails = () => {
                 e.target.src = '/vite.svg';
               }}
             />
-            {/* Image Navigation Buttons */}
             {!isZoomed && product.images.length > 1 && (
               <>
                 <button 
@@ -195,7 +205,7 @@ const ProductDetails = () => {
               </>
             )}
           </div>
-          {/* Thumbnail Preview */}
+          {/* Thumbnails */}
           {product.images.length > 1 && (
             <div className="flex justify-center space-x-2 mt-4 overflow-x-auto">
               {product.images.map((img, index) => (
@@ -211,7 +221,7 @@ const ProductDetails = () => {
             </div>
           )}
         </div>
-        </div>
+
 
         {/* Product Information Section */}
         <div>
@@ -245,8 +255,17 @@ const ProductDetails = () => {
           {/* Product Highlights */}
           <div className="mt-6 space-y-4">
             <div className="flex items-center">
-              <Check className="mr-2 text-green-500" />
-              <span>Available</span>
+              {product.inStock ? (
+                <>
+                  <Check className="mr-2 text-green-500" />
+                  <span className="text-green-700">In Stock and Ready to Ship</span>
+                </>
+              ) : (
+                <>
+                  <XCircle className="mr-2 text-red-500" />
+                  <span className="text-red-700">Currently Out of Stock</span>
+                </>
+              )}
             </div>
             <div className="flex items-center">
               <Truck className="mr-2 text-blue-500" />
@@ -257,6 +276,7 @@ const ProductDetails = () => {
               <span>1-Year Warranty</span>
             </div>
           </div>
+
 
           {/* Quantity Selector */}
           <div className="mt-6 flex items-center space-x-4">
@@ -283,9 +303,15 @@ const ProductDetails = () => {
           <div className="mt-6 flex space-x-4">
             <button 
               onClick={handleAddToCart}
-              className="flex items-center bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+              disabled={!product.inStock}
+              className={`flex items-center px-6 py-3 rounded-lg transition ${
+                product.inStock 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-gray-400 text-white cursor-not-allowed'
+              }`}
             >
-              <ShoppingCart className="mr-2" /> Add to Cart
+              <ShoppingCart className="mr-2" /> 
+              {product.inStock ? 'Add to Cart' : 'Out of Stock'}
             </button>
             <button 
               onClick={handleAddToWishlist}

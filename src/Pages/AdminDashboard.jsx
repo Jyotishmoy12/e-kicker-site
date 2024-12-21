@@ -21,7 +21,8 @@ const AdminDashboard = () => {
     price: '',
     originalPrice: '',
     image: '',
-    ratings: 0
+    ratings: 0,
+    inStock:true
   });
   const [editingProduct, setEditingProduct] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -70,7 +71,8 @@ const AdminDashboard = () => {
             ...doc.data(),
             price: safeParseFloat(doc.data().price),
             originalPrice: safeParseFloat(doc.data().originalPrice),
-            ratings: safeParseFloat(doc.data().ratings)
+            ratings: safeParseFloat(doc.data().ratings),
+            inStock:doc.data().inStock ?? true
           }));
           setProducts(productList);
 
@@ -146,7 +148,8 @@ const AdminDashboard = () => {
         image: imageUrl || 'vite.svg',
         price: safeParseFloat(newProduct.price),
         originalPrice: safeParseFloat(newProduct.originalPrice),
-        ratings: safeParseFloat(newProduct.ratings)
+        ratings: safeParseFloat(newProduct.ratings),
+        inStock: newProduct.inStock
       });
   
       setProducts([...products, { 
@@ -155,7 +158,8 @@ const AdminDashboard = () => {
         image: imageUrl || 'vite.svg',
         price: safeParseFloat(newProduct.price),
         originalPrice: safeParseFloat(newProduct.originalPrice),
-        ratings: safeParseFloat(newProduct.ratings)
+        ratings: safeParseFloat(newProduct.ratings),
+        inStock: newProduct.inStock
       }]);
       
       // Reset form
@@ -165,7 +169,8 @@ const AdminDashboard = () => {
         price: '',
         originalPrice: '',
         image: '',
-        ratings: 0
+        ratings: 0,
+        inStock:true
       });
       setImageFile(null);
       setImagePreview(null);
@@ -335,6 +340,22 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleUpdateStock = async (productId, inStock) => {
+    try {
+      const productRef = doc(db, 'products', productId);
+      await updateDoc(productRef, { inStock });
+      
+      setProducts(products.map(p => 
+        p.id === productId ? { ...p, inStock } : p
+      ));
+      
+      toast.success(`Product marked as ${inStock ? 'in stock' : 'out of stock'}`);
+    } catch (error) {
+      console.error('Error updating stock status:', error);
+      toast.error('Failed to update stock status');
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
@@ -423,6 +444,21 @@ const AdminDashboard = () => {
             step="0.1"
             max="5"
           />
+          <div className="col-span-2 mt-4">
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={editingProduct ? editingProduct.inStock : newProduct.inStock}
+              onChange={(e) => 
+                editingProduct 
+                  ? setEditingProduct({...editingProduct, inStock: e.target.checked})
+                  : setNewProduct({...newProduct, inStock: e.target.checked})
+              }
+              className="form-checkbox h-4 w-4 text-blue-600"
+            />
+            <span>In Stock</span>
+          </label>
+        </div>
           <div className="col-span-2 flex items-center space-x-4">
   <div className="flex-1">
     <input
@@ -490,11 +526,18 @@ const AdminDashboard = () => {
             key={product.id} 
             className="bg-white rounded-lg shadow-md overflow-hidden"
           >
-            <img 
-              src={product.image || 'vite.svg'} 
-              alt={product.name} 
-              className="w-full h-48 object-cover"
-            />
+            <div className="relative">
+              <img 
+                src={product.image || 'vite.svg'} 
+                alt={product.name} 
+                className="w-full h-48 object-cover"
+              />
+              <div className={`absolute top-2 right-2 px-2 py-1 rounded ${
+                product.inStock ? 'bg-green-500' : 'bg-red-500'
+              } text-white text-sm`}>
+                {product.inStock ? 'In Stock' : 'Out of Stock'}
+              </div>
+            </div>
             <div className="p-4">
               <h3 className="text-lg font-semibold">{product.name}</h3>
               <p className="text-gray-600 mb-2">{product.description}</p>
@@ -508,6 +551,14 @@ const AdminDashboard = () => {
                   </span>
                 </div>
                 <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleUpdateStock(product.id, !product.inStock)}
+                    className={`px-2 py-1 rounded text-white text-sm ${
+                      product.inStock ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'
+                    }`}
+                  >
+                    {product.inStock ? 'Mark Out of Stock' : 'Mark In Stock'}
+                  </button>
                   <button
                     onClick={() => {
                       setEditingProduct(product);

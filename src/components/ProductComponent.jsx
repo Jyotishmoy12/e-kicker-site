@@ -215,6 +215,10 @@ const ProductComponent = () => {
       navigate('/account');
       return;
     }
+    if (!product.inStock) {
+      toast.error('This product is currently out of stock');
+      return;
+    }
 
     try {
       const cartCollection = collection(db, 'users', user.uid, 'cart');
@@ -308,6 +312,11 @@ const ProductComponent = () => {
                   alt={product.name} 
                   className="w-full h-32 sm:h-40 md:h-48 object-cover"
                 />
+                <div className={`absolute top-1 left-1 px-2 py-1 rounded ${
+                  product.inStock ? 'bg-green-500' : 'bg-red-500'
+                } text-white text-xs`}>
+                  {product.inStock ? 'In Stock' : 'Out of Stock'}
+                </div>
                 <button 
                   onClick={() => handleAddToWishlist(product)} 
                   className={`absolute top-1 sm:top-2 right-1 sm:right-2 bg-white/80 p-1 sm:p-1.5 rounded-full hover:bg-white
@@ -343,10 +352,15 @@ const ProductComponent = () => {
                   <div className="flex w-full sm:w-auto gap-1 sm:gap-2 text-xs">
                     <button 
                       onClick={() => handleAddToCart(product)} 
-                      className="flex-1 sm:flex-none bg-blue-600 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full hover:bg-blue-700 transition-colors flex items-center justify-center"
+                      className={`flex-1 sm:flex-none ${
+                        product.inStock 
+                          ? 'bg-blue-600 hover:bg-blue-700' 
+                          : 'bg-gray-400 cursor-not-allowed'
+                      } text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full transition-colors flex items-center justify-center`}
+                      disabled={!product.inStock}
                     >
                       <ShoppingCart className="mr-1 w-3 h-3 sm:w-4 sm:h-4" />
-                      Add
+                      {product.inStock ? 'Add' : 'Out of Stock'}
                     </button>
                     <Link 
                       to={`/productDetails/${product.id}`} 
