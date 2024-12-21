@@ -10,7 +10,7 @@ const PrivateRoute = ({ children, adminOnly = false }) => {
     return <Navigate to="/account" replace />;
   }
 
-  if (adminOnly && user.email !== 'bhargab@gmail.com') {
+  if (adminOnly && user.email !== 'admfouekicker@gmail.com') {
     // Not an admin, redirect to home
     return <Navigate to="/" replace />;
   }

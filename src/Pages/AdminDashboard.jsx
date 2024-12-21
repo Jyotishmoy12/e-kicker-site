@@ -26,6 +26,7 @@ const AdminDashboard = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [isProductLoading, setIsProductLoading] = useState(false);
   const navigate = useNavigate();
   
   // Document states
@@ -51,7 +52,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const checkAdminAccess = () => {
       const user = auth.currentUser;
-      if (!user || user.email !== 'bhargab@gmail.com') {
+      if (!user || user.email !== 'admfouekicker@gmail.com') {
         navigate('/account');
         return false;
       }
@@ -134,7 +135,7 @@ const AdminDashboard = () => {
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsProductLoading(true); 
     
     try {
       // Upload image to Cloudinary instead of Firebase
@@ -175,15 +176,14 @@ const AdminDashboard = () => {
       console.error('Error adding product:', error);
       toast.error('Failed to add product');
     } finally {
-      setIsLoading(false);
+      setIsProductLoading(false); 
     }
   };
   
 
   const handleUpdateProduct = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    
+    setIsProductLoading(true);
     try {
       // Upload new image to Cloudinary if provided
       const imageUrl = imageFile 
@@ -214,7 +214,7 @@ const AdminDashboard = () => {
       console.error('Error updating product:', error);
       toast.error('Failed to update product');
     } finally {
-      setIsLoading(false);
+      setIsProductLoading(false);
     }
   };
   
@@ -446,16 +446,26 @@ const AdminDashboard = () => {
     </div>
   )}
 </div>
-
-
         </div>
         <div className="mt-4 flex space-x-4">
-          <button
+                  <button
             type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+            disabled={isProductLoading}
+            className={`bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center ${
+              isProductLoading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
-            <PlusCircle className="mr-2" /> 
-            {editingProduct ? 'Update Product' : 'Add Product'}
+            {isProductLoading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white">...</svg>
+                {editingProduct ? 'Updating...' : 'Adding...'}
+              </>
+            ) : (
+              <>
+                <PlusCircle className="mr-2" />
+                {editingProduct ? 'Update Product' : 'Add Product'}
+              </>
+            )}
           </button>
           {editingProduct && (
             <button

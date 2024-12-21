@@ -111,7 +111,7 @@ const Header = () => {
     { to: '/r&d', label: 'Research' },
     // { to: '/userprofile', label: 'User Profile' },
     { to: '/account', label: 'Account' },
-    ...(userEmail === 'bhargab@gmail.com' ? [{ to: '/admin', label: 'Admin' }] : []),
+    ...(userEmail === 'admfouekicker@gmail.com' ? [{ to: '/admin', label: 'Admin' }] : []),
   ];
 
   const handleLogout = () => {
@@ -244,7 +244,7 @@ const Header = () => {
                 )}
               </Link>
             </li>
-            {userEmail && userEmail !== 'bhargab@gmail.com' && location.pathname === '/' && (
+            {userEmail && userEmail !== 'admfouekicker@gmail.com' && location.pathname === '/' && (
               <li>
                 <button 
                   onClick={handleLogout}
@@ -294,7 +294,7 @@ const Header = () => {
                   )}
                 </Link>
               </li>
-              {userEmail && userEmail !== 'bhargab@gmail.com' && location.pathname === '/' && (
+              {userEmail && userEmail !== 'admfouekicker@gmail.com' && location.pathname === '/' && (
                 <li>
                   <button 
                     onClick={handleLogout}

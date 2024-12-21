@@ -45,7 +45,7 @@ const SellerForm = () => {
         quantity: parseInt(formData.quantity)
       };
 
-      if (user.email === 'bhargab@gmail.com') {
+      if (user.email === 'admfouekicker@gmail.com') {
         // If the user is Bhargab, add to the 'productsByBhargab' collection
         await addDoc(collection(db, 'productsByBhargab'), productData);
       } else {
