@@ -544,10 +544,10 @@ const AdminDashboard = () => {
               <div className="flex justify-between items-center">
                 <div>
                   <span className="text-xl font-bold text-blue-800">
-                    ${(product.price || 0).toFixed(2)}
+                  ₹{(product.price || 0).toFixed(2)}
                   </span>
                   <span className="ml-2 line-through text-gray-500">
-                    ${(product.originalPrice || 0).toFixed(2)}
+                  ₹{(product.originalPrice || 0).toFixed(2)}
                   </span>
                 </div>
                 <div className="flex space-x-2">

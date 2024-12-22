@@ -124,7 +124,10 @@ const ProductDetails = () => {
       navigate('/account');
       return;
     }
-
+    if (!product.inStock) {
+      toast.error('Cannot add out of stock items to wishlist');
+      return;
+    }
     try {
       const wishlistCollection = collection(db, 'users', user.uid, 'wishlist');
       await addDoc(wishlistCollection, {
@@ -242,8 +245,8 @@ const ProductDetails = () => {
 
           {/* Pricing */}
           <div className="mt-4 flex items-center">
-            <span className="text-3xl font-bold text-blue-600">${product.price.toFixed(2)}</span>
-            <span className="ml-4 line-through text-gray-500">${product.originalPrice.toFixed(2)}</span>
+            <span className="text-3xl font-bold text-blue-600">₹{product.price.toFixed(2)}</span>
+            <span className="ml-4 line-through text-gray-500">₹{product.originalPrice.toFixed(2)}</span>
             <span className="ml-4 bg-green-100 text-green-800 px-2 py-1 rounded-full">
               {((1 - product.price / product.originalPrice) * 100).toFixed(0)}% OFF
             </span>
@@ -301,25 +304,30 @@ const ProductDetails = () => {
 
           {/* Action Buttons */}
           <div className="mt-6 flex space-x-4">
-            <button 
-              onClick={handleAddToCart}
-              disabled={!product.inStock}
-              className={`flex items-center px-6 py-3 rounded-lg transition ${
-                product.inStock 
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-gray-400 text-white cursor-not-allowed'
-              }`}
-            >
-              <ShoppingCart className="mr-2" /> 
-              {product.inStock ? 'Add to Cart' : 'Out of Stock'}
-            </button>
-            <button 
-              onClick={handleAddToWishlist}
-              className="flex items-center border border-blue-600 text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50 transition"
-            >
-              <Heart className="mr-2" /> Add to Wishlist
-            </button>
-          </div>
+          <button 
+            onClick={handleAddToCart}
+            disabled={!product.inStock}
+            className={`flex items-center px-6 py-3 rounded-lg transition ${
+              product.inStock 
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-gray-400 text-white cursor-not-allowed'
+            }`}
+          >
+            <ShoppingCart className="mr-2" /> 
+            {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+          </button>
+          <button 
+            onClick={handleAddToWishlist}
+            disabled={!product.inStock}
+            className={`flex items-center border px-6 py-3 rounded-lg transition ${
+              product.inStock 
+                ? 'border-blue-600 text-blue-600 hover:bg-blue-50'
+                : 'border-gray-400 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            <Heart className="mr-2" /> Add to Wishlist
+          </button>
+        </div>
         </div>
       </div>
 

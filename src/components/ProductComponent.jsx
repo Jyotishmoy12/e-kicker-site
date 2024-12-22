@@ -251,6 +251,10 @@ const ProductComponent = () => {
       return;
     }
 
+    if (!product.inStock) {
+      toast.error('Out of stock items cannot be added to wishlist');
+      return;
+    }
     try {
       const wishlistCollection = collection(db, 'users', user.uid, 'wishlist');
       
@@ -263,7 +267,8 @@ const ProductComponent = () => {
         productId: product.id,
         name: product.name,
         price: product.price,
-        image: product.image
+        image: product.image,
+        inStock:product.inStock
       });
       
       setWishlistItems(prev => new Set([...prev, product.id]));
@@ -318,10 +323,12 @@ const ProductComponent = () => {
                   {product.inStock ? 'In Stock' : 'Out of Stock'}
                 </div>
                 <button 
-                  onClick={() => handleAddToWishlist(product)} 
-                  className={`absolute top-1 sm:top-2 right-1 sm:right-2 bg-white/80 p-1 sm:p-1.5 rounded-full hover:bg-white
-                    ${wishlistItems.has(product.id) ? 'text-red-500' : 'text-gray-400'}`}
-                >
+                   onClick={() => handleAddToWishlist(product)} 
+                   className={`absolute top-1 sm:top-2 right-1 sm:right-2 bg-white/80 p-1 sm:p-1.5 rounded-full hover:bg-white
+                     ${wishlistItems.has(product.id) ? 'text-red-500' : 'text-gray-400'}
+                     ${!product.inStock ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white'}`}
+                   disabled={!product.inStock}
+                 >
                   <Heart className="w-3 h-3 sm:w-4 sm:h-4" fill={wishlistItems.has(product.id) ? "currentColor" : "none"} />
                 </button>
               </div>
