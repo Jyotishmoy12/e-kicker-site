@@ -5,7 +5,6 @@ import ProductComponent from '../components/ProductComponent'
 import Footer from '../components/Footer'
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from '../../firebase'
-
 const Home = () => {
   const [products, setProducts] = useState([]);
   const [displayProducts, setDisplayProducts] = useState([]);

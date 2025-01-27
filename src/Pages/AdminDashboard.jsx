@@ -7,9 +7,8 @@ import {
   updateDoc, 
   addDoc 
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useNavigate } from 'react-router-dom';
-import { auth, db, storage } from '../../firebase';
+import { auth, db } from '../../firebase';
 import { Trash2, Edit, PlusCircle, Upload, FileText } from 'lucide-react';
 import { toast } from 'react-toastify';
 
@@ -29,7 +28,6 @@ const AdminDashboard = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [isProductLoading, setIsProductLoading] = useState(false);
   const navigate = useNavigate();
-  
   // Document states
   const [documents, setDocuments] = useState([]);
   const [newDocument, setNewDocument] = useState({

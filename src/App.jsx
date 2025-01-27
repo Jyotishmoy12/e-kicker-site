@@ -24,12 +24,14 @@ import PrivacyPolicy from './Pages/PrivacyPolicy';
 import Repairing from './Pages/Repairing';
 import ProjectPrototyping from './Pages/ProjectPrototyping';
 import ProductsPage from './Pages/ProductsPage';
+import ScrollToTop from './components/ScrollToTop';
 
 
 const App = () => {
   return (
     <>
     <Router>
+      <ScrollToTop/>
     <ToastContainer 
         position="top-right" 
         autoClose={5000} 

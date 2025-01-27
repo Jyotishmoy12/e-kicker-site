@@ -132,7 +132,7 @@ const ProductRating = ({ productId, currentRating = 0 }) => {
         ))}
       </div>
       
-      <div className="text-sm text-gray-600 text-center">
+      <div className="text-sm text-blue-600 text-center">
         {hasRated ? (
           <p>Your rating: {userRating}/5</p>
         ) : (
@@ -264,21 +264,21 @@ const ProductComponent = ({
   return (
     <div className="container mx-auto px-4 py-8 bg-neutral-50">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-thin text-neutral-800">
+        <h1 className="text-3xl font-thin text-blue-800">
           {isAllProductsPage ? 'All Products' : 'Our Collection'}
         </h1>
         {user && (
           <div className="flex space-x-4">
             <Link 
               to="/wishlist" 
-              className="flex items-center text-neutral-600 hover:text-black transition-colors"
+              className="flex items-center text-blue-600 hover:text-black transition-colors"
             >
               <Heart className="w-5 h-5 mr-2" />
               Wishlist ({wishlistItems.size})
             </Link>
             <Link 
               to="/cart" 
-              className="flex items-center text-neutral-600 hover:text-black transition-colors"
+              className="flex items-center text-blue-600 hover:text-black transition-colors"
             >
               <ShoppingCart className="w-5 h-5 mr-2" />
               Cart ({cartCount})
@@ -322,15 +322,15 @@ const ProductComponent = ({
                 </div>
 
                 <div className="p-4">
-                  <h3 className="text-lg font-medium text-neutral-800 mb-2 truncate">
+                  <h3 className="text-lg font-medium text-blue-800 mb-2 truncate">
                     {product.name}
                   </h3>
                   <div className="flex justify-between items-center mb-4">
                     <div>
-                      <span className="text-xl font-semibold text-neutral-900 mr-2">
+                      <span className="text-xl font-semibold text-blue-900 mr-2">
                         ₹{product.price.toFixed(2)}
                       </span>
-                      <span className="text-sm text-neutral-500 line-through">
+                      <span className="text-sm text-blue-500 line-through">
                         ₹{product.originalPrice.toFixed(2)}
                       </span>
                     </div>
@@ -345,7 +345,7 @@ const ProductComponent = ({
                       onClick={() => handleAddToCart(product)} 
                       className={`flex-1 py-2 rounded-md text-white transition-colors ${
                         product.inStock 
-                          ? 'bg-neutral-800 hover:bg-neutral-700' 
+                          ? 'bg-blue-800 hover:bg-blue-700' 
                           : 'bg-neutral-400 cursor-not-allowed'
                       }`}
                       disabled={!product.inStock}
@@ -354,7 +354,7 @@ const ProductComponent = ({
                     </button>
                     <Link 
                       to={`/productDetails/${product.id}`} 
-                      className="flex-1 py-2 rounded-md border border-neutral-800 text-neutral-800 text-center hover:bg-neutral-100 transition-colors"
+                      className="flex-1 py-2 rounded-md border border-blue-800 text-blue-800 text-center hover:bg-neutral-100 transition-colors"
                     >
                       Details
                     </Link>
@@ -368,7 +368,7 @@ const ProductComponent = ({
             <div className="text-center mt-8">
               <Link 
                 to="/products" 
-                className="px-6 py-3 bg-neutral-800 text-white rounded-md hover:bg-neutral-700 transition-colors"
+                className="px-6 py-3 bg-blue-800 text-white rounded-md hover:bg-neutral-700 transition-colors"
               >
                 View All Products ({totalProductCount})
               </Link>
