@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { auth, db } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
-import { CreditCard, ShoppingBag, Check } from 'lucide-react';
+import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { CreditCard, ShoppingBag } from 'lucide-react';
 import Navbar from "../components/Navbar";
 
 const CheckoutPage = () => {
@@ -17,19 +17,13 @@ const CheckoutPage = () => {
     address: '',
     city: '',
     state: '',
-    zipCode: '',  // Pincode field
-    cardNumber: '',
-    expiryDate: '',
-    cvv: ''
+    zipCode: '', 
   });
-  const [isPincodeValid, setIsPincodeValid] = useState(true);  // Track pincode validity
+  const [isPincodeValid, setIsPincodeValid] = useState(true); 
 
-  const validPincodes = ['110001', '110002', '110003']; // Add valid pincodes here
+  const validPincodes = ['110001', '110002', '110003'];
 
   const navigate = useNavigate();
-  
-  const googleFormUrl = "https://docs.google.com/forms/d/e/1FAIpQLSdU-1MiVmWSIqFtFKUDEBJbPc26IqpncSZ-CfVf5Haw8zHORQ/viewform" // Replace with your Google Form URL
-  
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -77,9 +71,8 @@ const CheckoutPage = () => {
       ...prev,
       [name]: value,
     }));
-    
+
     if (name === 'zipCode') {
-      // Check if entered pincode is valid
       if (validPincodes.includes(value)) {
         setIsPincodeValid(true);
       } else {
@@ -88,33 +81,54 @@ const CheckoutPage = () => {
     }
   };
 
-  const handleSubmitOrder = async () => {
+  // Razorpay integration
+  const handlePayment = async () => {
     if (!isPincodeValid) {
       alert('Invalid Pincode! You cannot place the order.');
       return;
     }
-  
-    try {
-      // Clear the cart in Firestore
-      const cartCollection = collection(db, 'users', user.uid, 'cart');
-      const cartSnapshot = await getDocs(cartCollection);
-      const cartDocs = cartSnapshot.docs;
-  
-      // Delete each cart item
-      for (const cartDoc of cartDocs) {
-        await deleteDoc(doc(db, 'users', user.uid, 'cart', cartDoc.id));
-      }
-  
-      // Redirect to the cart page
-      navigate('/cart');
-    } catch (error) {
-      console.error('Error clearing the cart:', error);
-    }
-  
-    // Redirect to Google Form (or proceed as necessary)
-    window.open(googleFormUrl, "_blank");
+
+    const totalAmount = calculateTotal() * 100; // Razorpay accepts amount in paise (cents)
+
+    const options = {
+      key: 'YOUR_RAZORPAY_KEY', // Your Razorpay key here
+      amount: totalAmount,
+      currency: 'INR',
+      name: 'Your Company Name',
+      description: 'Payment for Order',
+      image: 'https://yourdomain.com/logo.png',
+      handler: async function (response) {
+        // Handle payment success
+        console.log('Payment successful:', response);
+        
+        try {
+          // Clear the cart in Firestore
+          const cartCollection = collection(db, 'users', user.uid, 'cart');
+          const cartSnapshot = await getDocs(cartCollection);
+          const cartDocs = cartSnapshot.docs;
+
+          for (const cartDoc of cartDocs) {
+            await deleteDoc(doc(db, 'users', user.uid, 'cart', cartDoc.id));
+          }
+
+          // Redirect to the cart page
+          navigate('/cart');
+        } catch (error) {
+          console.error('Error clearing the cart:', error);
+        }
+      },
+      prefill: {
+        name: formData.firstName + ' ' + formData.lastName,
+        email: formData.email,
+      },
+      theme: {
+        color: '#4CAF50',
+      },
+    };
+
+    const razorpayInstance = new window.Razorpay(options);
+    razorpayInstance.open();
   };
-  
 
   if (loading) {
     return (
@@ -171,13 +185,13 @@ const CheckoutPage = () => {
               <CreditCard className="w-10 h-10 text-blue-600 mr-4" />
               <h2 className="text-3xl font-extrabold text-blue-900">Checkout</h2>
             </div>
-            <form onSubmit={handleSubmitOrder} className="space-y-6">
+            <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
               {/* Form fields */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-blue-900 mb-2">First Name</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleInputChange}
@@ -187,8 +201,8 @@ const CheckoutPage = () => {
                 </div>
                 <div>
                   <label className="block text-blue-900 mb-2">Last Name</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleInputChange}
@@ -199,31 +213,14 @@ const CheckoutPage = () => {
               </div>
 
               {/* Other fields */}
-              {/* <div>
-                <label className="block text-blue-900 mb-2">Pincode (Zip Code)</label>
-                <input
-                  type="text"
-                  name="zipCode"
-                  value={formData.zipCode}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                {!isPincodeValid && (
-                  <p className="text-red-500 text-sm">Invalid Pincode! Please enter a valid pincode.</p>
-                )}
-              </div> */}
 
               <button
                 type="button"
-                onClick={handleSubmitOrder}
-                // disabled={!isPincodeValid}
+                onClick={handlePayment}
                 className={`w-full py-3 font-bold rounded-lg ${isPincodeValid ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-400 text-gray-200 cursor-not-allowed'}`}
               >
                 Place Order
               </button>
-              
-              <p className="font-serif font-bold">Note: Please be aware that we are currently using Google Forms for orders. Therefore, kindly keep track of your order, as your cart will be emptied once you click on "Place Order"! </p>
             </form>
           </div>
         </div>

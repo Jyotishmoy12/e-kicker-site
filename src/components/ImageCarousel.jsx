@@ -63,34 +63,35 @@ const ImageCarousel = () => {
   return (
     <div className="flex flex-col lg:flex-row w-full bg-gray-50">
       {/* Services Section */}
-      <div className="w-full lg:w-1/3 bg-white shadow-md flex flex-col min-h-[400px] lg:h-[500px] overflow-hidden order-2 lg:order-1">
-        <h2 className="text-xl md:text-2xl font-bold mb-2 md:mb-2 text-gray-800 px-4 md:px-6 pt-4 md:pt-6">Our Services</h2>
-        <div className="flex-1 flex flex-col justify-between px-4 md:px-6 pb-4 md:pb-6 space-y-3 md:space-y-0">
-          {services.map((service, index) => (
-            <Link 
-              key={index}
-              to={service.link}
-              className={`p-4 md:p-8 rounded-xl transition-all duration-300 
-                hover:shadow-xl hover:-translate-y-1 ${service.color}
-                transform hover:scale-105`}
-            >
-              <div className="flex items-center space-x-3 md:space-x-6">
-                <div className="flex-shrink-0 bg-white p-2 md:p-4 rounded-lg shadow-sm">
-                  {service.icon}
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-1 md:mb-2">
-                    {service.title}
-                  </h3>
-                  <p className="text-sm md:text-base text-gray-600">
-                    {service.description}
-                  </p>
-                </div>
-              </div>
-            </Link>
-          ))}
+      {/* Services Section */}
+<div className="w-full lg:w-1/3 bg-white shadow-md flex flex-col min-h-[400px] lg:h-auto overflow-auto order-2 lg:order-1">
+  <h2 className="text-xl md:text-2xl font-bold text-gray-800 px-4 md:px-6 pt-4 md:pt-6">Our Services</h2>
+  <div className="flex-1 flex flex-col justify-start px-4 md:px-6 pb-4 md:pb-6 space-y-0">
+    {services.map((service, index) => (
+      <Link 
+        key={index}
+        to={service.link}
+        className={`flex-1 p-4 md:p-6 border-b last:border-b-0 transition-all duration-300 
+          hover:shadow-md ${service.color}`}
+      >
+        <div className="flex items-center space-x-3 md:space-x-4 h-full">
+          <div className="flex-shrink-0 bg-white p-2 md:p-4 rounded-lg shadow-sm">
+            {service.icon}
+          </div>
+          <div className="flex-1 flex flex-col justify-center">
+            <h3 className="text-lg md:text-xl font-semibold text-gray-800">
+              {service.title}
+            </h3>
+            <p className="text-sm md:text-base text-gray-600">
+              {service.description}
+            </p>
+          </div>
         </div>
-      </div>
+      </Link>
+    ))}
+  </div>
+</div>
+
 
       {/* Carousel Section */}
       <div className="relative w-full lg:w-2/3 h-[300px] md:h-[400px] lg:h-[500px] overflow-hidden order-1 lg:order-2">
